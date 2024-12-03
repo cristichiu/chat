@@ -14,7 +14,6 @@ typedef struct Users {
     char password[64];
     char username[64];
     short int deleted;
-    long long unsigned int secret_key;
     struct tm time_created;
 } Users;
 
@@ -36,5 +35,6 @@ typedef struct Messages {
 } Messages;
 
 char *createUser(Users user);
+UserSessions loginUser(Users user);
 
 #endif 

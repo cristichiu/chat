@@ -51,3 +51,7 @@ char *createUser(Users user) {
     free(userFile);
     return "SUCCESS";
 }
+
+UserSessions loginUser(Users user) {
+    
+}
