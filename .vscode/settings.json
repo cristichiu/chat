@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "lib.h": "c",
+        "db.h": "c",
+        "string.h": "c",
+        "unistd.h": "c"
+    }
+}
