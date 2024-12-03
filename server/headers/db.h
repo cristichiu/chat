@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <string.h>
 #include <stdlib.h>
+#include "./lib.h"
 
 #define c_DB "../DB"
 
@@ -20,21 +21,22 @@ typedef struct Users {
 typedef struct UserSessions {
     int id;
     char IP[32];
-    char token[64];
+    long int token;
     short int deleted;
     int user_id;
+    struct tm time_created;
 } UserSessions;
 
 typedef struct Messages {
     int id;
     char message[1024];
-    struct tm time_created;
     short int deleted;
     short int dm;
     int user_id;
+    struct tm time_created;
 } Messages;
 
-char *createUser(Users user);
-UserSessions loginUser(Users user);
+int createUser(Users user);
+UserSessions loginUser(int user, char *IP);
 
 #endif 

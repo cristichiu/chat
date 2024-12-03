@@ -1,4 +1,38 @@
-#include "db.h"
+#include <time.h>
+#include <stdio.h>
+#include <sys/stat.h>
+#include <string.h>
+#include <stdlib.h>
+#include "./lib.h"
+
+#define c_DB "../DB"
+
+typedef struct Users {
+    int id;
+    char private_username[64];
+    char password[64];
+    char username[64];
+    short int deleted;
+    struct tm time_created;
+} Users;
+
+typedef struct UserSessions {
+    int id;
+    char IP[32];
+    long int token;
+    short int deleted;
+    int user_id;
+    struct tm time_created;
+} UserSessions;
+
+typedef struct Messages {
+    int id;
+    char message[1024];
+    short int deleted;
+    short int dm;
+    int user_id;
+    struct tm time_created;
+} Messages;
 
 int verifyDB() {
     struct stat st = {0};
@@ -21,10 +55,10 @@ int verify(char *filePath) {
     return 0;
 }
 
-int createUser(Users user) {
+char *createUser(Users user) {
     char *userFile = malloc(32);
     sprintf(userFile, "%s/%s", c_DB, "users.chat");
-    if(verify(userFile)) return 1063;
+    if(!verify(userFile)) return "Ceva nu a mers bine";
     //find last id
     Users buffer;
     FILE *forID = fopen(userFile, "rb");
@@ -43,8 +77,9 @@ int createUser(Users user) {
     }
     fclose(forID);
     //create user
+    printf("test1");
     FILE *file = fopen(userFile, "ab");
-    if(file == NULL) return 1062;
+    if(file == NULL) return "Something went wrong, this is a bug, report this.";
     user.deleted = 0;
     time_t t = time(NULL);
     struct tm tm = *localtime(&t);
@@ -52,15 +87,16 @@ int createUser(Users user) {
     fwrite(&user, sizeof(Users), 1, file);
     fclose(file);
     free(userFile);
-    return 0;
+    printf("test2");
+    return "SUCCESS";
 }
 
-UserSessions loginUser(int user, char *IP) {
+UserSessions loginUser(Users user, char *IP) {
     //verifications
     UserSessions session;
     char *sessionFile = malloc(32);
     sprintf(sessionFile, "%s/%s", c_DB, "sessions.chat");
-    if(verify(sessionFile)) return session;
+    if(!verify(sessionFile)) return session;
     //last id
     UserSessions buffer;
     FILE *forID = fopen(sessionFile, "rb");
@@ -85,7 +121,7 @@ UserSessions loginUser(int user, char *IP) {
     session.token = generate_token();
     strcpy(session.IP, IP);
     session.deleted = 0;
-    session.user_id = user;
+    session.user_id = user.id;
     session.deleted = 0;
 
     time_t t = time(NULL);

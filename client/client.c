@@ -18,19 +18,19 @@ int c_random(int min_n, int max_n)
     return rand() % (max_n - min_n + 1) + min_n;
 }
 
-long int generate_id()
+long int generate_token()
 {
     long int min_n = 1000000000000000; 
     long int max_n = 9999999999999999;
     return rand() % (max_n - min_n + 1) + min_n;
 }
 
-void func(int sockfd)
+void func(int sockfd, char IP[16])
 {
     char buff[MAX];
     char message_content[MAX] = "";
     char id[17]; 
-    long int id_integer = generate_id();
+    long int id_integer = generate_token();
     int n;
     snprintf(id, 17, "%li", id_integer);
 
@@ -40,9 +40,11 @@ void func(int sockfd)
         n = 0;
         while ((buff[n++] = getchar()) != '\n');
 
-
+        printf("%s", &IP);
         strncat(message_content, id, MAX - strlen(message_content) - 1);
+        strncat(message_content, IP, MAX - strlen(message_content) - 1);
         strncat(message_content, buff, MAX - strlen(message_content) - 1);
+        
         write(sockfd, message_content, sizeof(buff));
         memset(message_content, 0, sizeof(message_content));
 
@@ -89,7 +91,7 @@ int main()
         printf("connected to the server..\n");
 
     
-    func(sockfd);
+    func(sockfd, ip_address);
 
     
     close(sockfd);

@@ -2,6 +2,7 @@ BIN = bin
 HEADERS = headers
 HEADERS_BIN = $(BIN)/$(HEADERS)
 HEADERS_ALL = $(HEADERS_BIN)/db.o $(HEADERS_BIN)/lib.o
+#HEADERS_ALL = $(HEADERS_BIN)/lib.o
 
 all: clear $(BIN)/main.exe
 

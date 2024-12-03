@@ -10,12 +10,12 @@ void get_time(char *buffer, size_t buffer_size) {
              tm.tm_hour, tm.tm_min, tm.tm_sec);
 }
 
-int random(int min_n, int max_n)
+int random_range(int min_n, int max_n)
 {
     return rand() % (max_n - min_n + 1) + min_n;
 }
 
-long int generate_id()
+long int generate_token()
 {
     long int min_n = 1000000000000000; 
     long int max_n = 9999999999999999;

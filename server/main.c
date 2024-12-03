@@ -7,6 +7,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/wait.h> 
+#include "./headers/lib.h"
+#include "./headers/db.h"
 #define MAX 80
 #define PORT 8080
 #define SA struct sockaddr
@@ -16,8 +18,10 @@ void func(int connfd)
     char buff[MAX]; 
     char success[] = "success\n"; 
     char error[] = "error\n"; 
-    long int ID[17]; 
-    char message_content[4];
+
+    char ID[17];
+    char IP[16];
+    char message_content[MAX];
     int n; 
     
     for (;;) { 
@@ -28,23 +32,19 @@ void func(int connfd)
             printf("Client disconnected or error reading.\n");
             break; 
         }
+        Users test_user;
+        strcpy(test_user.private_username, "admin");
+        strcpy(test_user.username, "admin");
+        strcpy(test_user.password, "admin");
+        
+        createUser(test_user);
+
+
 
         printf("From client: %s", buff); 
-
-    strncpy(ID, buff, 16);
-    ID[16] = '\0'; 
-
-
-    strncpy(message_content, buff + 16, 4);
-    message_content[4] = '\0'; 
-
-    printf("First part: %s\n", ID);
-    printf("Second part: %s\n", message_content);
-
-
         write(connfd, success, strlen(success)); 
 
-        if (strncmp("exit", message_content, 4) == 0) { 
+        if (strncmp("exit", buff, 4) == 0) { 
             printf("Client initiated exit.\n"); 
             break; 
         } 
@@ -57,7 +57,15 @@ int main()
     int sockfd, connfd, len; 
     struct sockaddr_in servaddr, cli; 
   
-    
+        Users test_user;
+        strcpy(test_user.private_username, "admin");
+        strcpy(test_user.username, "admin");
+        strcpy(test_user.password, "admin");
+        
+        //printf("%i", createUser(test_user));
+        loginUser(1, "100.100.100.1");
+
+
     sockfd = socket(AF_INET, SOCK_STREAM, 0); 
     if (sockfd == -1) { 
         printf("socket creation failed...\n"); 
