@@ -63,7 +63,7 @@ int main()
         strcpy(test_user.password, "admin");
         
         //printf("%i", createUser(test_user));
-        loginUser(1, "100.100.100.1");
+        // loginUser(1, "100.100.100.1");
 
 
     sockfd = socket(AF_INET, SOCK_STREAM, 0); 
