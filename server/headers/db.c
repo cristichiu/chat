@@ -21,7 +21,8 @@ int verify(char *filePath) {
     return 0;
 }
 
-int createUser(Users user) {
+int createUser(char *private_username, char *username, char *password) {
+    Users user;
     //verification/init
     if(verify(c_users)) return 1063;
 
@@ -51,6 +52,9 @@ int createUser(Users user) {
     struct tm tm = *localtime(&t);
     user.time_created = tm;
     user.public_id = generate_token();
+    strcpy(user.private_username, private_username);
+    strcpy(user.username, username);
+    strcpy(user.password, password);
     fwrite(&user, sizeof(Users), 1, file);
     fclose(file);
 
@@ -209,6 +213,20 @@ int addUserInGrup(long int grup_public_id, int user_id, long int target_public_i
     addTarget.accept_by_user = 0;
     fwrite(&addTarget, sizeof(GrupMembers), 1, addTargetF);
     fclose(addTargetF);
+    return 0;
+}
+
+int existByUsername(char *username) {
+    FILE *file = fopen(c_users, "rb");
+    if(file == NULL) return 0;
+    Users user;
+    while(fread(&user, sizeof(Users), 1, file)) {
+        if(user.username == username) {
+            fclose(file);
+            return 1;
+        }
+    }
+    fclose(file);
     return 0;
 }
 

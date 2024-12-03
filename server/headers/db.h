@@ -59,11 +59,17 @@ typedef struct Messages {
     struct tm time_created;
 } Messages;
 
-int createUser(Users user);
+int createUser(char *private_username, char *username, char *password);
 UserSessions loginUser(char *private_username, char *password, char *IP);
 int createGrup(char *name, int user_id);
 int addUserInGrup(long int grup_public_id, int user_id, long int target_public_id, int permissions);
+
+int existByUsername(char *username);
+//TODO: User getUserByToken(int token);
+
+// Astea doar iti da versiunea publica a structurii, adica elimina 
 Users publicUser(Users user);
 UserSessions publicUserSession(UserSessions userS);
+Grups publicGrup(Grups grup)
 
 #endif 
