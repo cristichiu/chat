@@ -144,6 +144,7 @@ int createGrup(char *name, int user_id) {
     owner.grup_id = grup.id;
     owner.permissions = init+write+read+invite+kick+gPerm;
     owner.accept_by_user = 1;
+    owner.deleted = 0;
     fwrite(&owner, sizeof(GrupMembers), 1, addOwner);
     fclose(addOwner);
 
@@ -162,7 +163,7 @@ int createGrup(char *name, int user_id) {
     return 0;
 }
 
-int addUserInGrup(long int grup_public_id, int user_id, long int target_public_id, int permissions) {
+int addMemberInGrup(long int grup_public_id, int user_id, long int target_public_id, int permissions) {
     //find grup
     FILE *findGrup = fopen(c_grups, "rb");
     if(findGrup == NULL) return 1055;
@@ -211,9 +212,43 @@ int addUserInGrup(long int grup_public_id, int user_id, long int target_public_i
     addTarget.grup_id = grup.id;
     addTarget.permissions = permissions;
     addTarget.accept_by_user = 0;
+    addTarget.deleted = 0;
     fwrite(&addTarget, sizeof(GrupMembers), 1, addTargetF);
     fclose(addTargetF);
     return 0;
+}
+
+int removeMemberFromGrup(long int grup_public_id, int user_id, long int target_public_id) {
+    
+};
+
+Grups getGrupByPublicId(long int public_id) {
+    Grups grup;
+    FILE *findGrup = fopen(c_grups, "rb");
+    if(findGrup == NULL) return grup;
+    while(fread(&grup, sizeof(Grups), 1, findGrup)) if(grup.public_id == public_id) break;
+    fclose(findGrup);
+    if(grup.public_id != public_id) return grup;
+    return grup;
+}
+
+Users getUserByToken(long int token) {
+    Users user;
+    UserSessions buffer;
+    FILE *findUserSession = fopen(c_sessions, "rb");
+    if(findUserSession == NULL) return user;
+    while(fread(&buffer, sizeof(UserSessions), 1, findUserSession)) if(buffer.token == token) break;
+    fclose(findUserSession);
+    if(buffer.token != token) return user;
+    FILE *findUser = fopen(c_users, "rb");
+    if(findUser == NULL) return user;
+    while(fread(&user, sizeof(Users), 1, findUser)) if(user.id == buffer.user_id) break;
+    fclose(findUser);
+    if(user.id != buffer.user_id) {
+        Users userErr;
+        return userErr;
+    }
+    return user;
 }
 
 int existByUsername(char *username) {

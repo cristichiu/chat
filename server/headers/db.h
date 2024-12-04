@@ -38,6 +38,7 @@ typedef struct GrupMembers {
     int user_id;
     int grup_id;
     short int accept_by_user;
+    int deleted;
     int permissions; // write|read|invite|kick|give permissions -> 5 decimals -> 1 for denied, 2 for access (ex: 12111)
 } GrupMembers;
 
@@ -62,7 +63,7 @@ typedef struct Messages {
 int createUser(char *private_username, char *username, char *password);
 UserSessions loginUser(char *private_username, char *password, char *IP);
 int createGrup(char *name, int user_id);
-int addUserInGrup(long int grup_public_id, int user_id, long int target_public_id, int permissions);
+int addMemberInGrup(long int grup_public_id, int user_id, long int target_public_id, int permissions);
 
 int existByUsername(char *username);
 //TODO: User getUserByToken(int token);
@@ -70,6 +71,6 @@ int existByUsername(char *username);
 // Astea doar iti da versiunea publica a structurii, adica elimina 
 Users publicUser(Users user);
 UserSessions publicUserSession(UserSessions userS);
-Grups publicGrup(Grups grup)
+Grups publicGrup(Grups grup);
 
 #endif 
