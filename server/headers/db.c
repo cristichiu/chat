@@ -21,13 +21,14 @@ int verify(char *filePath) {
     return 0;
 }
 
-int createUser(Users user) {
-    char *userFile = malloc(32);
-    sprintf(userFile, "%s/%s", c_DB, "users.chat");
-    if(verify(userFile)) return 1063;
+int createUser(char *private_username, char *username, char *password) {
+    Users user;
+    //verification/init
+    if(verify(c_users)) return 1063;
+
     //find last id
     Users buffer;
-    FILE *forID = fopen(userFile, "rb");
+    FILE *forID = fopen(c_users, "rb");
     if(forID == NULL) {
         user.id = 1;
     } else {
@@ -42,28 +43,32 @@ int createUser(Users user) {
         }
     }
     fclose(forID);
+
     //create user
-    FILE *file = fopen(userFile, "ab");
+    FILE *file = fopen(c_users, "ab");
     if(file == NULL) return 1062;
     user.deleted = 0;
     time_t t = time(NULL);
     struct tm tm = *localtime(&t);
     user.time_created = tm;
+    user.public_id = generate_token();
+    strcpy(user.private_username, private_username);
+    strcpy(user.username, username);
+    strcpy(user.password, password);
     fwrite(&user, sizeof(Users), 1, file);
     fclose(file);
-    free(userFile);
+
     return 0;
 }
 
-UserSessions loginUser(int user, char *IP) {
+UserSessions loginUser(char *private_username, char *password, char *IP) {
     //verifications
     UserSessions session;
-    char *sessionFile = malloc(32);
-    sprintf(sessionFile, "%s/%s", c_DB, "sessions.chat");
-    if(verify(sessionFile)) return session;
-    //last id
+    if(verify(c_sessions)) return session;
+
+    //find last id
     UserSessions buffer;
-    FILE *forID = fopen(sessionFile, "rb");
+    FILE *forID = fopen(c_sessions, "rb");
     if(forID == NULL) {
         session.id = 1;
     } else {
@@ -78,22 +83,206 @@ UserSessions loginUser(int user, char *IP) {
         }
     }
     fclose(forID);
-    //create session
-    FILE *file = fopen(sessionFile, "ab");
+
+    //find user and identify the user
+    FILE *userF = fopen(c_users, "rb");
+    if(userF == NULL) return session;
+    Users user;
+    while(fread(&user, sizeof(Users), 1, userF)) {
+        if(!strcmp(user.private_username, private_username) && !strcmp(user.password, password)) {
+            session.user_id = user.id;
+            break;
+        }
+    }
+    fclose(userF);
+    if(session.user_id == NULL) return session;
+
+    //defaults, create
+    FILE *file = fopen(c_sessions, "ab");
     if(file == NULL) return session;
-    //defaults
     session.token = generate_token();
     strcpy(session.IP, IP);
     session.deleted = 0;
-    session.user_id = user;
-    session.deleted = 0;
-
     time_t t = time(NULL);
     struct tm tm = *localtime(&t);
     session.time_created = tm;
     fwrite(&session, sizeof(UserSessions), 1, file);
     fclose(file);
 
-    free(sessionFile);
     return session;
+}
+
+int createGrup(char *name, int user_id) {
+     //verifications
+    Grups grup;
+    if(verify(c_grups)) return 1064;
+
+    //find last id
+    Grups buffer;
+    FILE *forID = fopen(c_grups, "rb");
+    if(forID == NULL) {
+        grup.id = 1;
+    } else {
+        fseek(forID, 0, SEEK_END);
+        long dim = ftell(forID);
+        if (dim == 0) {
+            grup.id = 1;
+        } else {
+            fseek(forID, -sizeof(Grups), SEEK_CUR);
+            fread(&buffer, sizeof(Grups), 1, forID);
+            grup.id = buffer.id + 1;
+        }
+    }
+    fclose(forID);
+
+    //add the owner on GrupMembers file
+    GrupMembers owner;
+    if(verify(c_grup_members)) return 1064;
+    FILE *addOwner = fopen(c_grup_members, "ab");
+    if(addOwner == NULL) return 1064;
+    owner.user_id = user_id;
+    owner.grup_id = grup.id;
+    owner.permissions = init+write+read+invite+kick+gPerm;
+    owner.accept_by_user = 1;
+    owner.deleted = 0;
+    fwrite(&owner, sizeof(GrupMembers), 1, addOwner);
+    fclose(addOwner);
+
+    //defaults, create
+    FILE *file = fopen(c_grups, "ab");
+    if(file == NULL) return 1064;
+    grup.public_id = generate_token();
+    strcpy(grup.name, name);
+    grup.deleted = 0;
+    time_t t = time(NULL);
+    struct tm tm = *localtime(&t);
+    grup.time_created = tm;
+    grup.owner = user_id;
+    fwrite(&grup, sizeof(Grups), 1, file);
+    fclose(file);
+    return 0;
+}
+
+int addMemberInGrup(long int grup_public_id, int user_id, long int target_public_id, int permissions) {
+    //find grup
+    FILE *findGrup = fopen(c_grups, "rb");
+    if(findGrup == NULL) return 1055;
+    Grups grup;
+    while(fread(&grup, sizeof(Grups), 1, findGrup)) if(grup.public_id == grup_public_id) break;
+    fclose(findGrup);
+    if(grup.public_id != grup_public_id) return 404;
+    
+    // see user permissions
+    int givePermissions = 0;
+    int inv = 0;
+
+    if(grup.owner == user_id) { givePermissions = 1; inv = 1; } else {
+        FILE *fUsInGrupMem = fopen(c_grup_members, "rb");
+        if(fUsInGrupMem == NULL) return 1055;
+        GrupMembers grupMember;
+        while(fread(&grupMember, sizeof(GrupMembers), 1, fUsInGrupMem)) if(grupMember.user_id == user_id) break;
+        fclose(fUsInGrupMem);
+        if(grupMember.user_id != user_id) return 404;
+        givePermissions = grupMember.permissions%(gPerm*10)/gPerm == 2 ? 1:0;
+        inv = grupMember.permissions%(invite*10)/invite == 2 ? 1:0;
+    }
+    if(!inv) return 403;
+    if(!givePermissions) permissions = init;
+
+    // target
+    FILE *findTarget = fopen(c_users, "rb");
+    if(findTarget == NULL) return 1055;
+    Users target;
+    while (fread(&target, sizeof(Users), 1, findTarget)) if(target.public_id == target_public_id) break;
+    fclose(findTarget);
+    if(target.public_id != target_public_id) return 404;
+
+    FILE *findTargetInGrupMembers = fopen(c_grup_members, "rb");
+    if(findTargetInGrupMembers == NULL) return 1055;
+    GrupMembers grupMember;
+    while(fread(&grupMember, sizeof(GrupMembers), 1, findTargetInGrupMembers)) if(grupMember.grup_id == grup.id && grupMember.user_id == target.id) break;
+    fclose(findTargetInGrupMembers);
+    if(grupMember.grup_id == grup.id && grupMember.user_id == target.id) return 204;
+
+    GrupMembers addTarget;
+    if(verify(c_grup_members)) return 1064;
+    FILE *addTargetF = fopen(c_grup_members, "ab");
+    if(addTargetF == NULL) return 1064;
+    addTarget.user_id = target.id;
+    addTarget.grup_id = grup.id;
+    addTarget.permissions = permissions;
+    addTarget.accept_by_user = 0;
+    addTarget.deleted = 0;
+    fwrite(&addTarget, sizeof(GrupMembers), 1, addTargetF);
+    fclose(addTargetF);
+    return 0;
+}
+
+int removeMemberFromGrup(long int grup_public_id, int user_id, long int target_public_id) {
+    
+};
+
+Grups getGrupByPublicId(long int public_id) {
+    Grups grup;
+    FILE *findGrup = fopen(c_grups, "rb");
+    if(findGrup == NULL) return grup;
+    while(fread(&grup, sizeof(Grups), 1, findGrup)) if(grup.public_id == public_id) break;
+    fclose(findGrup);
+    if(grup.public_id != public_id) return grup;
+    return grup;
+}
+
+Users getUserByToken(long int token) {
+    Users user;
+    UserSessions buffer;
+    FILE *findUserSession = fopen(c_sessions, "rb");
+    if(findUserSession == NULL) return user;
+    while(fread(&buffer, sizeof(UserSessions), 1, findUserSession)) if(buffer.token == token) break;
+    fclose(findUserSession);
+    if(buffer.token != token) return user;
+    FILE *findUser = fopen(c_users, "rb");
+    if(findUser == NULL) return user;
+    while(fread(&user, sizeof(Users), 1, findUser)) if(user.id == buffer.user_id) break;
+    fclose(findUser);
+    if(user.id != buffer.user_id) {
+        Users userErr;
+        return userErr;
+    }
+    return user;
+}
+
+int existByUsername(char *username) {
+    FILE *file = fopen(c_users, "rb");
+    if(file == NULL) return 0;
+    Users user;
+    while(fread(&user, sizeof(Users), 1, file)) {
+        if(user.username == username) {
+            fclose(file);
+            return 1;
+        }
+    }
+    fclose(file);
+    return 0;
+}
+
+Users publicUser(Users user) {
+    // protected id, private_username, password
+    user.id = NULL;
+    strcpy(user.private_username, "");
+    strcpy(user.password, "");
+    return user;
+}
+
+UserSessions publicUserSession(UserSessions userS) {
+    // protected id, IP, user_id
+    userS.id = NULL;
+    strcpy(userS.IP, "");
+    userS.user_id = NULL;
+    return userS;
+}
+
+Grups publicGrup(Grups grup) {
+    //protected ID
+    grup.id = NULL;
+    return grup;
 }
