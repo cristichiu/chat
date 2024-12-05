@@ -1,17 +1,7 @@
-#ifndef DB_H_  
-#define DB_H_
-#include <time.h>
-#include <stdio.h>
-#include <sys/stat.h>
-#include <string.h>
-#include <stdlib.h>
-#include "./lib.h"
+#ifndef DB_MODELS_H
+#define DB_MODELS_H
 
-#define c_DB "../DB"
-#define c_sessions "../DB/sessions.chat"
-#define c_users "../DB/users.chat"
-#define c_grups "../DB/grups.chat"
-#define c_grup_members "../DB/grup_members.chat"
+#include  "libraries.h"
 
 typedef struct Users {
     int id;
@@ -60,17 +50,5 @@ typedef struct Messages {
     struct tm time_created;
 } Messages;
 
-int createUser(char *private_username, char *username, char *password);
-UserSessions loginUser(char *private_username, char *password, char *IP);
-int createGrup(char *name, int user_id);
-int addMemberInGrup(long int grup_public_id, int user_id, long int target_public_id, int permissions);
 
-int existByUsername(char *username);
-//TODO: User getUserByToken(int token);
-
-// Astea doar iti da versiunea publica a structurii, adica elimina 
-Users publicUser(Users user);
-UserSessions publicUserSession(UserSessions userS);
-Grups publicGrup(Grups grup);
-
-#endif 
+#endif
