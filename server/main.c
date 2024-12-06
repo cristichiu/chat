@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include <sys/wait.h> 
 #include "./headers/lib.h"
-#include "./headers/db.h"
+// #include "./headers/db.h"
 #define MAX 80
 #define PORT 8080
 #define SA struct sockaddr
@@ -32,12 +32,12 @@ void func(int connfd)
             printf("Client disconnected or error reading.\n");
             break; 
         }
-        Users test_user;
-        strcpy(test_user.private_username, "admin");
-        strcpy(test_user.username, "admin");
-        strcpy(test_user.password, "admin");
+        // Users test_user;
+        // strcpy(test_user.private_username, "admin");
+        // strcpy(test_user.username, "admin");
+        // strcpy(test_user.password, "admin");
         
-        createUser(test_user);
+        // createUser(test_user);
 
 
 
@@ -57,10 +57,10 @@ int main()
     int sockfd, connfd, len; 
     struct sockaddr_in servaddr, cli; 
   
-        Users test_user;
-        strcpy(test_user.private_username, "admin");
-        strcpy(test_user.username, "admin");
-        strcpy(test_user.password, "admin");
+        // Users test_user;
+        // strcpy(test_user.private_username, "admin");
+        // strcpy(test_user.username, "admin");
+        // strcpy(test_user.password, "admin");
         
         //printf("%i", createUser(test_user));
         // loginUser(1, "100.100.100.1");

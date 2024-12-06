@@ -1,8 +1,6 @@
-#include <stdio.h>
-#include <time.h>
+#include "t.h"
 
 int main() {
-    int test[10];
-    printf("%d", sizeof(struct tm));
+    hmm();
     return 0;
 }

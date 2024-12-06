@@ -15,11 +15,21 @@ int random_range(int min_n, int max_n)
     return rand() % (max_n - min_n + 1) + min_n;
 }
 
-long int generate_token()
-{
-    long int min_n = 1000000000000000; 
-    long int max_n = 9999999999999999;
-    return rand() % (max_n - min_n + 1) + min_n;
+// long int generate_token()
+// {
+//     srand(time(NULL));
+//     long int min_n = 1000000000000000; 
+//     long int max_n = 9999999999999999;
+//     return rand() % (max_n - min_n + 1) + min_n;
+// }
+
+
+long int generate_token() {
+    long int token = 0;
+    int i;
+    token = (rand() % 9 + 1);
+    for (i = 1; i < 16; i++) {
+        token = token * 10 + (rand() % 10);
+    }
+    return token;
 }
-
-
