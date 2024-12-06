@@ -16,57 +16,6 @@
 #define PORT 8080
 #define SA struct sockaddr
 
-<<<<<<< Updated upstream
-void func(int sockfd)
-{
-    char buff[MAX];
-    int n;
-    for (;;) {
-        bzero(buff, sizeof(buff));
-        printf("Enter  : ");
-        n = 0;
-        while ((buff[n++] = getchar()) != '\n');
-        write(sockfd, buff, sizeof(buff));
-        bzero(buff, sizeof(buff));
-        read(sockfd, buff, sizeof(buff));
-        printf("Server : %s", buff);
-
-        if ((strncmp(buff, "reg_request", strlen("reg_request"))) == 0) {
-            printf("\n######Registration requested by server.######\n");
-
-            
-            char username1[MAX], username2[MAX], password[MAX];
-
-            
-            printf("Enter Username: ");
-            bzero(username1, sizeof(username1));
-            fgets(username1, sizeof(username1), stdin);
-            username1[strcspn(username1, "\n")] = '\0'; 
-
-            
-            printf("Enter Private Username: ");
-            bzero(username2, sizeof(username2));
-            fgets(username2, sizeof(username2), stdin);
-            username2[strcspn(username2, "\n")] = '\0'; 
-
-            
-            printf("Enter Password: ");
-            bzero(password, sizeof(password));
-            fgets(password, sizeof(password), stdin);
-            password[strcspn(password, "\n")] = '\0'; 
-
-            
-            char reg_data[MAX];
-            snprintf(reg_data, sizeof(reg_data), "%s>!#%s>!#%s", username1, username2, password);
-            write(sockfd, reg_data, sizeof(reg_data));
-
-            printf("######Registration data sent to server.######\n");
-        }
-
-
-        if ((strncmp(buff, "ex", 2)) == 0) {
-            printf("Client Exit...\n");
-=======
 #define ERROR "\033[0;31m"
 #define SUCCESS "\033[0;32m"
 #define USER "\033[0;33m"
@@ -121,7 +70,6 @@ void handle_client(int sockfd, int connfd)
         else if ((strncmp(buff, "ex", 2)) == 0)
         {
             printf("%sClient Exit...\n%s", ERROR, RESET);
->>>>>>> Stashed changes
             close(sockfd);
             exit(0);
             break;
@@ -135,17 +83,10 @@ int main()
     int sockfd, connfd;
     struct sockaddr_in servaddr, cli;
 
-<<<<<<< Updated upstream
-    
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd == -1) {
-        printf("socket creation failed...\n");
-=======
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd == -1)
     {
         printf("%ssocket creation failed...\n%s", ERROR, RESET);
->>>>>>> Stashed changes
         exit(0);
     }
     else
@@ -158,22 +99,6 @@ int main()
     servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
     servaddr.sin_port = htons(PORT);
 
-<<<<<<< Updated upstream
-    if (connect(sockfd, (SA*)&servaddr, sizeof(servaddr)) != 0) {
-        printf("connection with the server failed...\n");
-        perror("connect"); 
-        exit(0);
-    }
-    else {
-        printf("connected to the server..\n");
-        printf("Choose an option:\n1. Register\n2. Login\n");
-    } 
-
-    
-    func(sockfd);
-
-    
-=======
     if (connect(sockfd, (SA *)&servaddr, sizeof(servaddr)) != 0)
     {
         printf("%sconnection with the server failed...\n%s", ERROR, RESET);
@@ -188,6 +113,5 @@ int main()
 
     handle_client(sockfd, connfd);
 
->>>>>>> Stashed changes
     close(sockfd);
 }

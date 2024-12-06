@@ -2,10 +2,6 @@
 #include <time.h>
 #include <stdlib.h>
 
-<<<<<<< Updated upstream
-=======
-
->>>>>>> Stashed changes
 void get_time(char *buffer, size_t buffer_size) {
     time_t t = time(NULL);
     struct tm tm = *localtime(&t);

@@ -1,8 +1,8 @@
 BIN = bin
 HEADERS = headers
 HEADERS_BIN = $(BIN)/$(HEADERS)
-HEADERS_ALL = $(HEADERS_BIN)/user.o $(HEADERS_BIN)/lib.o $(HEADERS_BIN)/grup.o $(HEADERS_BIN)/utilities.o $(HEADERS_BIN)/message.o
-MAINC = dbTesting.c
+HEADERS_ALL = $(HEADERS_BIN)/user.o $(HEADERS_BIN)/lib.o $(HEADERS_BIN)/grup.o $(HEADERS_BIN)/utilities.o $(HEADERS_BIN)/message.o $(HEADERS_BIN)/server_utils.o 
+MAINC = main.c
 
 all: clear $(BIN)/main.exe
 
@@ -23,6 +23,8 @@ $(HEADERS_BIN)/message.o: $(HEADERS_BIN)
 	gcc -c $(HEADERS)/db/code/message.c -o $(HEADERS_BIN)/message.o
 $(HEADERS_BIN)/lib.o: $(HEADERS_BIN)
 	gcc -c $(HEADERS)/lib.c -o $(HEADERS_BIN)/lib.o
+$(HEADERS_BIN)/server_utils.o: $(HEADERS_BIN)
+	gcc -c $(HEADERS)/server_utils.c -o $(HEADERS_BIN)/server_utils.o
 
 # compilarea main.c
 $(BIN)/main.exe: $(HEADERS_ALL)
