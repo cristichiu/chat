@@ -15,5 +15,6 @@ GrupMembers getGrupMember(long int user_id, long int grup_id);
 GrupMembers *getAllGrupMembers(long int grup_id);
 GrupMembers *getAllMyGrups(long int user_id);
 int acceptInvitation(long int user_id, long int grup_id);
+int kickFromGrup(long int target_id, long int user_id, long int grup_id);
 
 #endif

@@ -106,13 +106,13 @@ Users getUserByLInt(long int search, IntUserSearch searchFor) {
     if(find == NULL) return user;
     switch(searchFor) {
         case US_FOR_ID: {
-            while(fread(&user, sizeof(Users), 1, find)) if(user.id == search) break;
+            while(fread(&user, sizeof(Users), 1, find)) if(user.id == search && !user.deleted) break;
             fclose(find);
             if(user.id != search || user.deleted) { Users userErr; userErr.id = 0; return userErr; }
             return user;
         };
         case US_FOR_PUBLIC_ID: {
-            while(fread(&user, sizeof(Users), 1, find)) if(user.public_id == search) break;
+            while(fread(&user, sizeof(Users), 1, find)) if(user.public_id == search && !user.deleted) break;
             fclose(find);
             if(user.public_id != search || user.deleted) { Users userErr; userErr.id = 0; return userErr; }
             return user;
@@ -128,19 +128,19 @@ Users getUserByString(char *search, StringUserSearch searchFor) {
     if(find == NULL) return user;
     switch(searchFor) {
         case US_FOR_PRIVATE_USERNAME: {
-            while(fread(&user, sizeof(Users), 1, find)) if(!strcmp(user.private_username, search)) break;
+            while(fread(&user, sizeof(Users), 1, find)) if(!strcmp(user.private_username, search) && !user.deleted) break;
             fclose(find);
             if(strcmp(user.private_username, search) || user.deleted) { Users userErr; userErr.id = 0; return userErr; }
             return user;
         };
         case US_FOR_USERNAME: {
-            while(fread(&user, sizeof(Users), 1, find)) if(!strcmp(user.username, search)) break;
+            while(fread(&user, sizeof(Users), 1, find)) if(!strcmp(user.username, search) && !user.deleted) break;
             fclose(find);
             if(strcmp(user.username, search) || user.deleted) { Users userErr; userErr.id = 0; return userErr; }
             return user;
         };
         case US_FOR_PASSWORD: {
-            while(fread(&user, sizeof(Users), 1, find)) if(!strcmp(user.password, search)) break;
+            while(fread(&user, sizeof(Users), 1, find)) if(!strcmp(user.password, search) && !user.deleted) break;
             fclose(find);
             if(strcmp(user.password, search) || user.deleted) { Users userErr; userErr.id = 0; return userErr; }
             return user;
@@ -154,7 +154,7 @@ UserSessions getUserSessionByToken(long int search) {
     session.id = 0;
     FILE *find = fopen(c_sessions, "rb");
     if(find == NULL) return session;
-    while(fread(&session, sizeof(UserSessions), 1, find)) if(session.token == search) break;
+    while(fread(&session, sizeof(UserSessions), 1, find)) if(session.token == search && !session.deleted) break;
     fclose(find);
     if(session.token != search || session.deleted) { UserSessions sessionErr; sessionErr.id = 0; return sessionErr; }
     return session;

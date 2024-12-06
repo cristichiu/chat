@@ -7,9 +7,6 @@ int main() {
     //token = 9288424929268349; // user 3
     //token = 0;
 
-    Messages test = getMessageByLInt(1, MSGS_FOR_ID);
-    printf("%s\n", test.message);
-
     while(1) {
         if(!token) {
             int option;
@@ -45,7 +42,7 @@ int main() {
             }
         } else {
             int option;
-            printf("Select option:\n1: Vezi username-ul tau\n2: Creaza grup\n3: Vezi toate grupurile tale (owner)\n4: Adauga un utilizator la un grup\n5: Vezi toti utilizatorii din grup\n6: Scrie un mesaj\n7: Vezi toate mesajele\n8: Vezi toate grupurile tale (member)\n9: accepta invitatia intr-un grup\n");
+            printf("Select option:\n1: Vezi username-ul tau\n2: Creaza grup\n3: Vezi toate grupurile tale (owner)\n4: Adauga un utilizator la un grup\n5: Vezi toti utilizatorii din grup\n6: Scrie un mesaj\n7: Vezi toate mesajele\n8: Vezi toate grupurile tale (member)\n9: accepta invitatia intr-un grup\n10: kick\n");
             scanf("%d", &option);
             UserSessions session = getUserSessionByToken(token);
             if(!session.id) { printf("Ceva nu a mers bine, nu am putut gasi sesiunea ta!\n"); break; }
@@ -134,6 +131,7 @@ int main() {
                         }
                         count++;
                     }
+                    break;
                 }
                 case 8: {
                     GrupMembers *allMyGrups = getAllMyGrups(user.id);
@@ -156,6 +154,29 @@ int main() {
                         break;
                     }
                     if(acceptInvitation(user.id, grup.id)) printf("ceva nu a mers bine"); else printf("Ai acceptat invitatia cu succes");
+                    break;
+                }
+                case 10: {
+                    long int target_public_id;
+                    long int grup_public_id;
+                    printf("target_public_id: "); scanf("%ld", &target_public_id);
+                    printf("grup_public_id: "); scanf("%ld", &grup_public_id);
+
+                    Users target = getUserByLInt(target_public_id, US_FOR_PUBLIC_ID);
+                    if(!target.id) {
+                        printf("Nu am gasit target-ul");
+                        break;
+                    }
+                    if(target.id == user.id) {
+                        printf("nu poti sa-ti dai kick singur!");
+                        break;
+                    }
+                    Grups grup = getGrupByLId(grup_public_id, GS_FOR_PUBLIC_ID);
+                    if(!grup.id) {
+                        printf("Nu am gasit grupul.");
+                        break;
+                    }
+                    if(kickFromGrup(target.id, user.id, grup.id)) printf("Ceva nu a mers bine la kick"); else printf("Am dat utilizatorul afara cu succes");
                 }
             }
         }
