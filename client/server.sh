@@ -1,6 +1,5 @@
 #!/bin/bash
-
-lsof -i :8080
+clear
 cd ../server
 make
 cd bin

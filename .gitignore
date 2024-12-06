@@ -6,3 +6,17 @@
 server/bin/headers/utilities.o
 server/bin/headers/grup.o
 server/bin/headers/lib.o
+<<<<<<< Updated upstream
+=======
+/server/bin
+/server/DB
+/server/DB
+*.chat
+server/makefile
+client/client
+/client/bin
+client/client
+/server/DB
+>>>>>>> Stashed changes
+*.chat
+server/bin/main.exe

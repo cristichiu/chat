@@ -8,12 +8,18 @@
 #include <unistd.h>
 #include <sys/wait.h> 
 #include "./headers/lib.h"
+<<<<<<< Updated upstream
 
+=======
+#include "./headers/db/index.h"
+#include "./headers/server_utils.h"
+>>>>>>> Stashed changes
 #define MAX 80
 #define PORT 8080
 #define SA struct sockaddr
 
 
+<<<<<<< Updated upstream
 #include <stdio.h>
 #include <string.h>
 
@@ -51,10 +57,50 @@ void terminate_connection (int connfd) {
         write(connfd, "ex", strlen("ex"));
         close(connfd);
         exit(0);
+=======
+#define MAX_CLIENTS 10
+int client_sockets[MAX_CLIENTS]; 
+int client_count = 0;             
+
+
+void handle_message(int connfd, char *buffer);
+
+typedef struct {
+    const char *command;
+    void (*handler)(int, char *);
+} Command;
+
+
+Command command_table[] = {
+    {"REG:", handle_registration},
+    {"LGN:", handle_login},
+    {"EXIT:", terminate_connection},
+    {"MSG:", handle_message},
+    {NULL, NULL} 
+};
+
+void handle_message(int connfd, char *buffer) {
+    char *message = buffer + strlen("MSG:");
+    write(connfd, message, strlen(message));
+    printf("%sMessage relayed to client: %s%s\n", CYAN, message, RESET);
+}
+
+void handle_command(int connfd, char *buffer) {
+    if (buffer == NULL || *buffer == '\0') {
+        return;
+    }
+    for (int i = 0; command_table[i].command != NULL; i++) {
+        if (strncmp(buffer, command_table[i].command, strlen(command_table[i].command)) == 0) {
+            command_table[i].handler(connfd, buffer);
+            return;
+        }
+    }
+>>>>>>> Stashed changes
 }
 
 void handle_client(int connfd, int sockfd) {
     char buff[MAX];
+<<<<<<< Updated upstream
     char success[] = "success\n";
     char register_request[] = "reg_request";
     char error[] = "error\n";
@@ -91,6 +137,19 @@ void handle_client(int connfd, int sockfd) {
             terminate_connection(connfd);
             break;
         }
+=======
+    int n;
+    for (;;)
+    {
+        bzero(buff, MAX);
+        read(connfd, buff, sizeof(buff));
+        if (read <= 0)
+        {
+            printf("%sClient disconnected or error reading.%s\n", ERROR, RESET);
+            break;
+        }
+        handle_command(connfd,buff);
+>>>>>>> Stashed changes
     }
 }
 
@@ -102,10 +161,25 @@ int main() {
     if (sockfd == -1) {
         printf("socket creation failed...\n");
         exit(0);
+<<<<<<< Updated upstream
     } else
         printf("Socket successfully created..\n");
     bzero( & servaddr, sizeof(servaddr));
 
+=======
+    }
+    else
+        printf("%sSocket successfully created..%s\n", SUCCESS, RESET);
+
+    int opt = 1;
+    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
+    {
+        printf("%sSetting SO_REUSEADDR failed%s\n", ERROR, RESET);
+        exit(0);
+    }
+
+    bzero(&servaddr, sizeof(servaddr));
+>>>>>>> Stashed changes
 
     servaddr.sin_family = AF_INET;
     servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -130,8 +204,16 @@ int main() {
     if (connfd < 0) {
         printf("server accept failed...\n");
         exit(0);
+<<<<<<< Updated upstream
     } else {
         printf("server accept the client...\n");
+=======
+    }
+    else
+    {
+        printf("%sServer accept the client...%s\n", SUCCESS, RESET);
+        showTable(SHOW_USERS);
+>>>>>>> Stashed changes
     }
 
     handle_client(connfd, sockfd);

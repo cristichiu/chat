@@ -2,6 +2,10 @@
 #include <time.h>
 #include <stdlib.h>
 
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
 void get_time(char *buffer, size_t buffer_size) {
     time_t t = time(NULL);
     struct tm tm = *localtime(&t);
@@ -14,15 +18,6 @@ int random_range(int min_n, int max_n)
 {
     return rand() % (max_n - min_n + 1) + min_n;
 }
-
-// long int generate_token()
-// {
-//     srand(time(NULL));
-//     long int min_n = 1000000000000000; 
-//     long int max_n = 9999999999999999;
-//     return rand() % (max_n - min_n + 1) + min_n;
-// }
-
 
 long int generate_token() {
     long int token = 0;
