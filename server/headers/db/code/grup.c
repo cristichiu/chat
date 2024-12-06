@@ -28,7 +28,7 @@ int createGrup(char *name, int user_id) {
     if(addOwner == NULL) return 1064;
     owner.user_id = user_id;
     owner.grup_id = grup.id;
-    owner.permissions = init+write+read+invite+kick+gPerm;
+    owner.permissions = p_init+p_write+p_read+p_invite+p_kick+p_gPerm;
     owner.accept_by_user = 1;
     owner.deleted = 0;
     fwrite(&owner, sizeof(GrupMembers), 1, addOwner);
@@ -61,11 +61,11 @@ int addMemberInGrup(long int grup_public_id, int user_id, long int target_public
     if(grup.owner == user_id) { givePermissions = 1; inv = 1; } else {
         GrupMembers grupMember = getGrupMember(user_id, grup.id);
         if(grupMember.user_id != user_id) return 404;
-        givePermissions = grupMember.permissions%(gPerm*10)/gPerm == 2 ? 1:0;
-        inv = grupMember.permissions%(invite*10)/invite == 2 ? 1:0;
+        givePermissions = grupMember.permissions%(p_gPerm*10)/p_gPerm == 2 ? 1:0;
+        inv = grupMember.permissions%(p_invite*10)/p_invite == 2 ? 1:0;
     }
     if(!inv) return 403;
-    if(!givePermissions) permissions = init;
+    if(!givePermissions) permissions = p_init;
 
     // target
     Users target = getUserByLInt(target_public_id, US_FOR_PUBLIC_ID);
@@ -196,4 +196,11 @@ int acceptInvitation(long int user_id, long int grup_id) {
     }
     fclose(find);
     return 0;
+}
+
+int kickFromGrup(long int target_id, long int user_id, long int grup_id) {
+    GrupMembers userPerm = getGrupMember(user_id, grup_id);
+    if(!userPerm.user_id) return 403;
+    if(userPerm.permissions%(p_kick*10)/p_kick == 1) return 403;
+
 }
