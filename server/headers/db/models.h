@@ -43,6 +43,7 @@ typedef struct Grups {
 
 typedef struct Messages {
     long int id;
+    long int public_id;
     long int grup_id;
     long int user_id;
     char message[1024];

@@ -33,3 +33,7 @@ long int generate_token() {
     }
     return token;
 }
+void clear_stdin() {
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF); // Consumăm caracterele rămase
+}

@@ -7,5 +7,6 @@
 #include "grup.h"
 #include "user.h"
 #include "utilities.h"
+#include "message.h"
 
 #endif

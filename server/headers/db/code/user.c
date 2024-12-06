@@ -41,6 +41,7 @@ int createUser(char *private_username, char *username, char *password) {
 UserSessions loginUser(char *private_username, char *password, char *IP) {
     //verifications
     UserSessions session;
+    session.user_id = 0;
 
     //find last id
     UserSessions buffer;
@@ -69,6 +70,7 @@ UserSessions loginUser(char *private_username, char *password, char *IP) {
     Users user;
     while(fread(&user, sizeof(Users), 1, userF)) {
         if(!strcmp(user.private_username, private_username) && !strcmp(user.password, password)) {
+            if(user.deleted) break;
             session.user_id = user.id;
             break;
         }
@@ -106,13 +108,13 @@ Users getUserByLInt(long int search, IntUserSearch searchFor) {
         case US_FOR_ID: {
             while(fread(&user, sizeof(Users), 1, find)) if(user.id == search) break;
             fclose(find);
-            if(user.id != search) { Users userErr; userErr.id = 0; return userErr; }
+            if(user.id != search || user.deleted) { Users userErr; userErr.id = 0; return userErr; }
             return user;
         };
         case US_FOR_PUBLIC_ID: {
             while(fread(&user, sizeof(Users), 1, find)) if(user.public_id == search) break;
             fclose(find);
-            if(user.public_id != search) { Users userErr; userErr.id = 0; return userErr; }
+            if(user.public_id != search || user.deleted) { Users userErr; userErr.id = 0; return userErr; }
             return user;
         };
         default: { fclose(find); return user; }
@@ -128,19 +130,19 @@ Users getUserByString(char *search, StringUserSearch searchFor) {
         case US_FOR_PRIVATE_USERNAME: {
             while(fread(&user, sizeof(Users), 1, find)) if(!strcmp(user.private_username, search)) break;
             fclose(find);
-            if(strcmp(user.private_username, search)) { Users userErr; userErr.id = 0; return userErr; }
+            if(strcmp(user.private_username, search) || user.deleted) { Users userErr; userErr.id = 0; return userErr; }
             return user;
         };
         case US_FOR_USERNAME: {
             while(fread(&user, sizeof(Users), 1, find)) if(!strcmp(user.username, search)) break;
             fclose(find);
-            if(strcmp(user.username, search)) { Users userErr; userErr.id = 0; return userErr; }
+            if(strcmp(user.username, search) || user.deleted) { Users userErr; userErr.id = 0; return userErr; }
             return user;
         };
         case US_FOR_PASSWORD: {
             while(fread(&user, sizeof(Users), 1, find)) if(!strcmp(user.password, search)) break;
             fclose(find);
-            if(strcmp(user.password, search)) { Users userErr; userErr.id = 0; return userErr; }
+            if(strcmp(user.password, search) || user.deleted) { Users userErr; userErr.id = 0; return userErr; }
             return user;
         };
         default: { fclose(find); return user; }
@@ -154,6 +156,6 @@ UserSessions getUserSessionByToken(long int search) {
     if(find == NULL) return session;
     while(fread(&session, sizeof(UserSessions), 1, find)) if(session.token == search) break;
     fclose(find);
-    if(session.token != search) { UserSessions sessionErr; sessionErr.id = 0; return sessionErr; }
+    if(session.token != search || session.deleted) { UserSessions sessionErr; sessionErr.id = 0; return sessionErr; }
     return session;
 }
