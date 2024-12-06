@@ -46,13 +46,13 @@ Messages getMessageByLInt(long int search, IntMessageSearch searchFor) {
     if(find == NULL) return msg;
     switch(searchFor) {
         case MSGS_FOR_ID: {
-            while(fread(&msg, sizeof(Messages), 1, find)) if(msg.id == search) break;
+            while(fread(&msg, sizeof(Messages), 1, find)) if(msg.id == search && !msg.deleted) break;
             fclose(find);
             if(msg.id != search || msg.deleted) { Messages msgErr; msgErr.id = 0; return msgErr; }
             return msg;
         };
         case MSGS_FOR_PUBLIC_ID: {
-            while(fread(&msg, sizeof(Messages), 1, find)) if(msg.public_id == search) break;
+            while(fread(&msg, sizeof(Messages), 1, find)) if(msg.public_id == search && !msg.deleted) break;
             fclose(find);
             if(msg.public_id != search || msg.deleted) { Messages msgErr; msgErr.id = 0; return msgErr; }
             return msg;
