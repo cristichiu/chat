@@ -3,7 +3,7 @@
 int createMessage(char *message, long int grup_id, long int user_id) {
     GrupMembers member = getGrupMember(user_id, grup_id);
     if(!member.user_id) return 404;
-    if(member.permissions%(write*10)/write == 1) return 403;
+    if(member.permissions%(p_write*10)/p_write == 1) return 403;
     Messages msg;
     // find last id
     Messages buffer;

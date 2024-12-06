@@ -3,7 +3,7 @@
 int main() {
     srand(time(NULL));
     long int token = 4452924401234556; // user 1
-    token = 1104023631938694; // user 2
+    //token = 1104023631938694; // user 2
     //token = 9288424929268349; // user 3
     //token = 0;
 
@@ -71,7 +71,7 @@ int main() {
                 case 4: {
                     long int grup_public_id;
                     long int user_public_id;
-                    int permissions = init+read+write;
+                    int permissions = p_init+p_read+p_write;
                     printf("grup_public_id: "); scanf("%ld", &grup_public_id);
                     printf("user_public_id: "); scanf("%ld", &user_public_id);
                     if(addMemberInGrup(grup_public_id, user.id, user_public_id, permissions)) printf("Ceva nu a mers cum trebuie\n"); else printf("User adaugat cu succes\n");
@@ -87,7 +87,7 @@ int main() {
                     while(allMembers[count].user_id) {
                         Users user = getUserByLInt(allMembers[count].user_id, US_FOR_ID);
                         if(user.id) {
-                            printf("%s - %d (%d)\n", user.username, allMembers[count].permissions, allMembers[count].accept_by_user);
+                            printf("%ld - %s - %d (%d)\n", user.public_id, user.username, allMembers[count].permissions, allMembers[count].accept_by_user);
                         }
                         count++;
                     }
@@ -120,7 +120,7 @@ int main() {
                     }
 
                     GrupMembers verify = getGrupMember(user.id, grup.id);
-                    if(!verify.user_id || verify.permissions%(read*10)/read == 1 || !verify.accept_by_user || verify.deleted) {
+                    if(!verify.user_id || verify.permissions%(p_read*10)/p_read == 1 || !verify.accept_by_user || verify.deleted) {
                         printf("Nu ai acces sa vezi ce este in acest grup");
                         break;
                     }

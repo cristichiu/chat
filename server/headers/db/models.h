@@ -22,7 +22,7 @@ typedef struct UserSessions {
     struct tm time_created;
 } UserSessions;
 
-typedef enum perm { init=11111, write=10000,read=1000,invite=100,kick=10,gPerm=1 } perm; // formula = perm%(read*10)/read == 2 for acces, == 1 for denied
+typedef enum perm { p_init=11111, p_write=10000,p_read=1000,p_invite=100,p_kick=10,p_gPerm=1 } perm; // formula = perm%(read*10)/read == 2 for acces, == 1 for denied
 
 typedef struct GrupMembers {
     long int user_id;
