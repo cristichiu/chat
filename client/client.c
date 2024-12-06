@@ -13,46 +13,57 @@
 #define PORT 8080
 #define SA struct sockaddr
 
-int c_random(int min_n, int max_n)
-{
-    return rand() % (max_n - min_n + 1) + min_n;
-}
-
-long int generate_token()
-{
-    long int min_n = 1000000000000000; 
-    long int max_n = 9999999999999999;
-    return rand() % (max_n - min_n + 1) + min_n;
-}
-
-void func(int sockfd, char IP[16])
+void func(int sockfd)
 {
     char buff[MAX];
-    char message_content[MAX] = "";
-    char id[17]; 
-    long int id_integer = generate_token();
     int n;
-    snprintf(id, 17, "%li", id_integer);
-
     for (;;) {
         bzero(buff, sizeof(buff));
-        printf("Enter the string : ");
+        printf("Enter  : ");
         n = 0;
         while ((buff[n++] = getchar()) != '\n');
-
-        printf("%s", &IP);
-        strncat(message_content, id, MAX - strlen(message_content) - 1);
-        strncat(message_content, IP, MAX - strlen(message_content) - 1);
-        strncat(message_content, buff, MAX - strlen(message_content) - 1);
-        
-        write(sockfd, message_content, sizeof(buff));
-        memset(message_content, 0, sizeof(message_content));
-
+        write(sockfd, buff, sizeof(buff));
         bzero(buff, sizeof(buff));
         read(sockfd, buff, sizeof(buff));
-        printf("From Server : %s", buff);
-        if ((strncmp(buff, "exit", 4)) == 0) {
+        printf("Server : %s", buff);
+
+        if ((strncmp(buff, "reg_request", strlen("reg_request"))) == 0) {
+            printf("\n######Registration requested by server.######\n");
+
+            
+            char username1[MAX], username2[MAX], password[MAX];
+
+            
+            printf("Enter Username: ");
+            bzero(username1, sizeof(username1));
+            fgets(username1, sizeof(username1), stdin);
+            username1[strcspn(username1, "\n")] = '\0'; 
+
+            
+            printf("Enter Private Username: ");
+            bzero(username2, sizeof(username2));
+            fgets(username2, sizeof(username2), stdin);
+            username2[strcspn(username2, "\n")] = '\0'; 
+
+            
+            printf("Enter Password: ");
+            bzero(password, sizeof(password));
+            fgets(password, sizeof(password), stdin);
+            password[strcspn(password, "\n")] = '\0'; 
+
+            
+            char reg_data[MAX];
+            snprintf(reg_data, sizeof(reg_data), "%s>!#%s>!#%s", username1, username2, password);
+            write(sockfd, reg_data, sizeof(reg_data));
+
+            printf("######Registration data sent to server.######\n");
+        }
+
+
+        if ((strncmp(buff, "ex", 2)) == 0) {
             printf("Client Exit...\n");
+            close(sockfd);
+            exit(0);
             break;
         }
     }
@@ -75,9 +86,7 @@ int main()
     bzero(&servaddr, sizeof(servaddr));
 
     char ip_address[16]; 
-    snprintf(ip_address, sizeof(ip_address), "127.0.0.%d", c_random(1,255));
-
-    printf("127.0.0.%d", c_random(1,255));
+    snprintf(ip_address, sizeof(ip_address), "127.0.0.%d", 128);
     servaddr.sin_family = AF_INET;
     servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
     servaddr.sin_port = htons(PORT);
@@ -87,11 +96,13 @@ int main()
         perror("connect"); 
         exit(0);
     }
-    else
+    else {
         printf("connected to the server..\n");
+        printf("Choose an option:\n1. Register\n2. Login\n");
+    } 
 
     
-    func(sockfd, ip_address);
+    func(sockfd);
 
     
     close(sockfd);
