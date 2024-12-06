@@ -62,7 +62,10 @@ UserSessions loginUser(char *private_username, char *password, char *IP) {
 
     //find user and identify the user
     FILE *userF = fopen(c_users, "rb");
-    if(userF == NULL) return session;
+    if(userF == NULL) {
+        session.id = 0;
+        return session;
+    }
     Users user;
     while(fread(&user, sizeof(Users), 1, userF)) {
         if(!strcmp(user.private_username, private_username) && !strcmp(user.password, password)) {
@@ -71,11 +74,17 @@ UserSessions loginUser(char *private_username, char *password, char *IP) {
         }
     }
     fclose(userF);
-    if(session.user_id == NULL) return session;
+    if(!session.user_id) {
+        session.id = 0;
+        return session;
+    }
 
     //defaults, create
     FILE *file = fopen(c_sessions, "ab");
-    if(file == NULL) return session;
+    if(file == NULL) {
+        session.id = 0;
+        return session;
+    }
     session.token = generate_token();
     strcpy(session.IP, IP);
     session.deleted = 0;
@@ -88,21 +97,22 @@ UserSessions loginUser(char *private_username, char *password, char *IP) {
     return session;
 }
 
-Users getUserByInt(int search, IntUserSearch searchFor) {
+Users getUserByLInt(long int search, IntUserSearch searchFor) {
     Users user;
+    user.id = 0;
     FILE *find = fopen(c_users, "rb");
     if(find == NULL) return user;
     switch(searchFor) {
-        case S_FOR_ID: {
+        case US_FOR_ID: {
             while(fread(&user, sizeof(Users), 1, find)) if(user.id == search) break;
             fclose(find);
-            if(user.id != search) { Users userErr; return userErr; }
+            if(user.id != search) { Users userErr; userErr.id = 0; return userErr; }
             return user;
         };
-        case S_FOR_PUBLIC_ID: {
+        case US_FOR_PUBLIC_ID: {
             while(fread(&user, sizeof(Users), 1, find)) if(user.public_id == search) break;
             fclose(find);
-            if(user.public_id != search) { Users userErr; return userErr; }
+            if(user.public_id != search) { Users userErr; userErr.id = 0; return userErr; }
             return user;
         };
         default: { fclose(find); return user; }
@@ -111,25 +121,26 @@ Users getUserByInt(int search, IntUserSearch searchFor) {
 
 Users getUserByString(char *search, StringUserSearch searchFor) {
     Users user;
+    user.id = 0;
     FILE *find = fopen(c_users, "rb");
     if(find == NULL) return user;
     switch(searchFor) {
-        case S_FOR_PRIVATE_USERNAME: {
+        case US_FOR_PRIVATE_USERNAME: {
             while(fread(&user, sizeof(Users), 1, find)) if(!strcmp(user.private_username, search)) break;
             fclose(find);
-            if(strcmp(user.private_username, search)) { Users userErr; return userErr; }
+            if(strcmp(user.private_username, search)) { Users userErr; userErr.id = 0; return userErr; }
             return user;
         };
-        case S_FOR_USERNAME: {
+        case US_FOR_USERNAME: {
             while(fread(&user, sizeof(Users), 1, find)) if(!strcmp(user.username, search)) break;
             fclose(find);
-            if(strcmp(user.username, search)) { Users userErr; return userErr; }
+            if(strcmp(user.username, search)) { Users userErr; userErr.id = 0; return userErr; }
             return user;
         };
-        case S_FOR_PASSWORD: {
+        case US_FOR_PASSWORD: {
             while(fread(&user, sizeof(Users), 1, find)) if(!strcmp(user.password, search)) break;
             fclose(find);
-            if(strcmp(user.password, search)) { Users userErr; return userErr; }
+            if(strcmp(user.password, search)) { Users userErr; userErr.id = 0; return userErr; }
             return user;
         };
         default: { fclose(find); return user; }
@@ -138,10 +149,11 @@ Users getUserByString(char *search, StringUserSearch searchFor) {
 
 UserSessions getUserSessionByToken(long int search) {
     UserSessions session;
+    session.id = 0;
     FILE *find = fopen(c_sessions, "rb");
     if(find == NULL) return session;
     while(fread(&session, sizeof(UserSessions), 1, find)) if(session.token == search) break;
     fclose(find);
-    if(session.token != search) { UserSessions sessionErr; return sessionErr; }
+    if(session.token != search) { UserSessions sessionErr; sessionErr.id = 0; return sessionErr; }
     return session;
 }

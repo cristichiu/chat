@@ -3,9 +3,8 @@
 int createGrup(char *name, int user_id) {
      //verifications
     Grups grup;
-    if(verify(c_grups)) return 1064;
 
-    //find last id
+    // find last id
     Grups buffer;
     FILE *forID = fopen(c_grups, "rb");
     if(forID == NULL) {
@@ -20,12 +19,11 @@ int createGrup(char *name, int user_id) {
             fread(&buffer, sizeof(Grups), 1, forID);
             grup.id = buffer.id + 1;
         }
+        fclose(forID);
     }
-    fclose(forID);
 
-    //add the owner on GrupMembers file
+    // add the owner on GrupMembers file
     GrupMembers owner;
-    if(verify(c_grup_members)) return 1064;
     FILE *addOwner = fopen(c_grup_members, "ab");
     if(addOwner == NULL) return 1064;
     owner.user_id = user_id;
@@ -36,7 +34,7 @@ int createGrup(char *name, int user_id) {
     fwrite(&owner, sizeof(GrupMembers), 1, addOwner);
     fclose(addOwner);
 
-    //defaults, create
+    // defaults, create
     FILE *file = fopen(c_grups, "ab");
     if(file == NULL) return 1064;
     grup.public_id = generate_token();
@@ -53,23 +51,15 @@ int createGrup(char *name, int user_id) {
 
 int addMemberInGrup(long int grup_public_id, int user_id, long int target_public_id, int permissions) {
     //find grup
-    FILE *findGrup = fopen(c_grups, "rb");
-    if(findGrup == NULL) return 1055;
-    Grups grup;
-    while(fread(&grup, sizeof(Grups), 1, findGrup)) if(grup.public_id == grup_public_id) break;
-    fclose(findGrup);
-    if(grup.public_id != grup_public_id) return 404;
+    Grups grup = getGrupByLId(grup_public_id, GS_FOR_PUBLIC_ID);
+    if(!grup.id) return 404;
     
     // see user permissions
     int givePermissions = 0;
     int inv = 0;
 
     if(grup.owner == user_id) { givePermissions = 1; inv = 1; } else {
-        FILE *fUsInGrupMem = fopen(c_grup_members, "rb");
-        if(fUsInGrupMem == NULL) return 1055;
-        GrupMembers grupMember;
-        while(fread(&grupMember, sizeof(GrupMembers), 1, fUsInGrupMem)) if(grupMember.user_id == user_id) break;
-        fclose(fUsInGrupMem);
+        GrupMembers grupMember = getGrupMember(user_id, grup.id);
         if(grupMember.user_id != user_id) return 404;
         givePermissions = grupMember.permissions%(gPerm*10)/gPerm == 2 ? 1:0;
         inv = grupMember.permissions%(invite*10)/invite == 2 ? 1:0;
@@ -78,22 +68,13 @@ int addMemberInGrup(long int grup_public_id, int user_id, long int target_public
     if(!givePermissions) permissions = init;
 
     // target
-    FILE *findTarget = fopen(c_users, "rb");
-    if(findTarget == NULL) return 1055;
-    Users target;
-    while (fread(&target, sizeof(Users), 1, findTarget)) if(target.public_id == target_public_id) break;
-    fclose(findTarget);
-    if(target.public_id != target_public_id) return 404;
+    Users target = getUserByLInt(target_public_id, US_FOR_PUBLIC_ID);
+    if(!target.id) return 404;
 
-    FILE *findTargetInGrupMembers = fopen(c_grup_members, "rb");
-    if(findTargetInGrupMembers == NULL) return 1055;
-    GrupMembers grupMember;
-    while(fread(&grupMember, sizeof(GrupMembers), 1, findTargetInGrupMembers)) if(grupMember.grup_id == grup.id && grupMember.user_id == target.id) break;
-    fclose(findTargetInGrupMembers);
+    GrupMembers grupMember = getGrupMember(target.id, grup.id);
     if(grupMember.grup_id == grup.id && grupMember.user_id == target.id) return 204;
 
     GrupMembers addTarget;
-    if(verify(c_grup_members)) return 1064;
     FILE *addTargetF = fopen(c_grup_members, "ab");
     if(addTargetF == NULL) return 1064;
     addTarget.user_id = target.id;
@@ -106,20 +87,34 @@ int addMemberInGrup(long int grup_public_id, int user_id, long int target_public
     return 0;
 }
 
-Grups getGrupById(int search) {
+Grups getGrupByLId(long int search, IntGrupSearch searchFor) {
     Grups grup;
+    grup.id = 0;
     FILE *find = fopen(c_grups, "rb");
     if(find == NULL) return grup;
-    while(fread(&grup, sizeof(Grups), 1, find)) if(grup.id == search) break;
-    fclose(find);
-    if(grup.id != search) { Grups grupErr; return grupErr; }
-    return grup;
+    switch(searchFor) {
+        case GS_FOR_ID: {
+            while(fread(&grup, sizeof(Grups), 1, find)) if(grup.id == search) break;
+            fclose(find);
+            if(grup.id != search) { Grups grupErr; grupErr.id = 0; return grupErr; }
+            return grup;
+        }
+        case GS_FOR_PUBLIC_ID: {
+            while(fread(&grup, sizeof(Grups), 1, find)) if(grup.public_id == search) break;
+            fclose(find);
+            if(grup.public_id != search) { Grups grupErr; grupErr.id = 0; return grupErr; }
+            return grup;
+        }
+        default: { Grups grupErr; grupErr.id = 0; return grupErr; }
+    }
 }
 
-Grups *getGrupsByOwner(int search) {
+Grups *getGrupsByOwner(long int search) {
     int capacity = 1;
     Grups *grups = (Grups*)malloc(sizeof(Grups) * capacity);
     Grups buffer;
+    buffer.id = 0;
+    grups[0] = buffer;
     FILE *find = fopen(c_grups, "rb");
     if(find == NULL) return grups;
     while(fread(&buffer, sizeof(Grups), 1, find)) {
@@ -129,6 +124,41 @@ Grups *getGrupsByOwner(int search) {
             grups = (Grups*)realloc(grups, sizeof(Grups)*capacity);
         }
     }
+    fclose(find);
     return grups;
     // da doamne sa mearga.
+}
+
+GrupMembers getGrupMember(long int user_id, long int grup_id) {
+    GrupMembers member;
+    member.user_id = 0;
+    FILE *find = fopen(c_grup_members, "rb");
+    if(find == NULL) return member;
+    while(fread(&member, sizeof(GrupMembers), 1, find)) if(member.user_id == user_id && member.grup_id == grup_id) break;
+    fclose(find);
+    if(!(member.user_id == user_id && member.grup_id == grup_id)) {
+        GrupMembers memberErr;
+        memberErr.user_id = 0;
+        return memberErr;
+    }
+    return member;
+}
+
+GrupMembers *getAllGrupMembers(long int grup_id) {
+    int capacity = 1;
+    GrupMembers *members = (GrupMembers*)malloc(sizeof(GrupMembers) * capacity);
+    GrupMembers buffer;
+    buffer.user_id = 0;
+    members[0] = buffer;
+    FILE *find = fopen(c_grup_members, "rb");
+    if(find == NULL) return members;
+    while(fread(&buffer, sizeof(GrupMembers), 1, find)) {
+        if(buffer.grup_id == grup_id) {
+            members[capacity-1] = buffer;
+            capacity++;
+            members = (GrupMembers*)realloc(members, sizeof(GrupMembers)*capacity);
+        }
+    }
+    fclose(find);
+    return members;
 }
