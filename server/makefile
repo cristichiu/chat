@@ -1,7 +1,8 @@
 BIN = bin
 HEADERS = headers
 HEADERS_BIN = $(BIN)/$(HEADERS)
-HEADERS_ALL = $(HEADERS_BIN)/db.o $(HEADERS_BIN)/lib.o
+HEADERS_ALL = $(HEADERS_BIN)/user.o $(HEADERS_BIN)/lib.o $(HEADERS_BIN)/grup.o $(HEADERS_BIN)/utilities.o $(HEADERS_BIN)/message.o
+MAINC = dbTesting.c
 
 all: clear $(BIN)/main.exe
 
@@ -12,14 +13,20 @@ $(HEADERS_BIN): $(BIN)
 	mkdir $(HEADERS_BIN)
 
 # compilarea headerelor
-$(HEADERS_BIN)/db.o: $(HEADERS_BIN)
-	gcc -c $(HEADERS)/db.c -o $(HEADERS_BIN)/db.o
+$(HEADERS_BIN)/user.o: $(HEADERS_BIN)
+	gcc -c $(HEADERS)/db/code/user.c -o $(HEADERS_BIN)/user.o
+$(HEADERS_BIN)/grup.o: $(HEADERS_BIN)
+	gcc -c $(HEADERS)/db/code/grup.c -o $(HEADERS_BIN)/grup.o
+$(HEADERS_BIN)/utilities.o: $(HEADERS_BIN)
+	gcc -c $(HEADERS)/db/code/utilities.c -o $(HEADERS_BIN)/utilities.o
+$(HEADERS_BIN)/message.o: $(HEADERS_BIN)
+	gcc -c $(HEADERS)/db/code/message.c -o $(HEADERS_BIN)/message.o
 $(HEADERS_BIN)/lib.o: $(HEADERS_BIN)
 	gcc -c $(HEADERS)/lib.c -o $(HEADERS_BIN)/lib.o
 
 # compilarea main.c
 $(BIN)/main.exe: $(HEADERS_ALL)
-	gcc main.c $(HEADERS_ALL) -o $(BIN)/main.exe
+	gcc $(MAINC) $(HEADERS_ALL) -o $(BIN)/main.exe
 
 # clear
 clear:
