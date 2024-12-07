@@ -7,3 +7,4 @@
 /server/DB
 *.chat
 client/client
+server/makefile
