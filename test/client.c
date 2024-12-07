@@ -9,7 +9,7 @@
 #define MAX 80
 #define PORT 8080
 #define SA struct sockaddr
-void func(int sockfd)
+void handle_client(int sockfd)
 {
     char buff[MAX];
     int n;
@@ -60,7 +60,7 @@ int main()
         printf("connected to the server..\n");
 
     
-    func(sockfd);
+    handle_client(sockfd);
 
     
     close(sockfd);
