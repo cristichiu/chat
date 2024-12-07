@@ -200,8 +200,12 @@ int acceptInvitation(long int user_id, long int grup_id) {
 
 int kickFromGrup(long int target_id, long int user_id, long int grup_id) {
     GrupMembers userPerm = getGrupMember(user_id, grup_id);
-    if(!userPerm.user_id) return 403;
-    if(userPerm.permissions%(p_kick*10)/p_kick == 1) return 403;
+    Grups grup = getGrupByLId(grup_id, GS_FOR_ID);
+    if(!grup.id) return 404; // nu exista asa grup
+    if(!userPerm.user_id) return 403; // nu est in grup
+    if(userPerm.permissions%(p_kick*10)/p_kick == 1) return 403; // verifica daca ai acces la kick
+    if(user_id == target_id) return 403; // nu ai acces sa-ti dai kick singur
+    if(grup.owner == target_id) return 403; // nu ai acces sa dai kick la owner
     GrupMembers target;
     FILE *find = fopen(c_grup_members, "r+b");
     if(find == NULL) return 1063;
