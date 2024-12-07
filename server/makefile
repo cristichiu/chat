@@ -2,7 +2,7 @@ BIN = bin
 HEADERS = headers
 HEADERS_BIN = $(BIN)/$(HEADERS)
 HEADERS_ALL = $(HEADERS_BIN)/user.o $(HEADERS_BIN)/lib.o $(HEADERS_BIN)/grup.o $(HEADERS_BIN)/utilities.o $(HEADERS_BIN)/message.o
-MAINC = dbTesting.c
+MAINC = testing.c
 
 all: clear $(BIN)/main.exe
 
