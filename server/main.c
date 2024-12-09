@@ -1,187 +1,155 @@
-#include <stdio.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <sys/wait.h>
-#include "./headers/lib.h"
+#include "../actions.h"
 #include "./headers/db/index.h"
+#include "./headers/socket/index.h"
 
-#define MAX 80
 #define PORT 8080
-#define SA struct sockaddr
+#define MAX_CLIENTS 100
 
-#define ERROR "\033[0;31m"
-#define SUCCESS "\033[0;32m"
-#define USER "\033[0;33m"
-#define BLUE "\033[0;34m"
-#define AUTH "\033[0;35m"
-#define CYAN "\033[0;36m"
-#define WHITE "\033[0;37m"
-#define RESET "\033[0m"
+int server_socket, client_sockets[MAX_CLIENTS];
 
-void register_split_string(const char *input, char *username, char *private, char *password)
-{
-    const char *processed_input = input + 4;
-    if (strlen(input) < 4)
-    {
-        username[0] = '\0';
-        private[0] = '\0';
-        password[0] = '\0';
-        return;
+// Funcția de oprire sigură a serverului la Ctrl+C
+void handle_sigint(int sig) {
+    printf("\nServerul se oprește...\n");
+
+    // Închidem toate conexiunile active
+    for (int i = 0; i < MAX_CLIENTS; i++) {
+        if (client_sockets[i] != 0) {
+            close(client_sockets[i]);
+        }
     }
-
-    char buffer[64];
-    strncpy(buffer, processed_input, sizeof(buffer));
-    buffer[sizeof(buffer) - 1] = '\0';
-
-    char *token = strtok(buffer, "#>!");
-
-    if (token != NULL)
-    {
-        strncpy(username, token, 64);
-        username[63] = '\0';
-        token = strtok(NULL, "#>!");
-    }
-
-    if (token != NULL)
-    {
-        strncpy(private, token, 64);
-        private[63] = '\0';
-        token = strtok(NULL, "#>!");
-    }
-
-    if (token != NULL)
-    {
-        strncpy(password, token, 64);
-        password[63] = '\0';
-    }
-}
-
-void terminate_connection(int connfd)
-{
-    write(connfd, "ex", strlen("ex"));
-    close(connfd);
-    printf("%sConnection terminated.%s\n", CYAN, RESET);
+    close(server_socket); // Închidem socket-ul serverului
     exit(0);
 }
 
-void handle_client(int connfd, int sockfd)
-{
-    char buff[MAX];
-    char success[] = "success\n";
-    char register_request[] = "reg_request";
-    char login_request[] = "lgn_request";
-    char error[] = "error\n";
-    int n;
-    char username[64];
-    char private_username[64];
-    char password[64];
-    long int tkn = 0;
-    for (;;)
-    {
-        bzero(buff, MAX);
-        read(connfd, buff, sizeof(buff));
+// ================ COMMANDS ================
+Command command_table[] = {
+    {a_register, handle_register},
+    {a_login, handle_login},
+    {a_whoami, handle_whoami},
+    {NULL, NULL}
+};
+// ==========================================
 
-        if (read <= 0)
-        {
-            printf("%sClient disconnected or error reading.%s\n", ERROR, RESET);
-            break;
+int main() {
+    showTable(SHOW_USERS);
+    int new_socket, max_sd, activity;
+    struct sockaddr_in server_addr;
+    char buffer[1024];
+    fd_set readfds;
+
+    // Setăm handler-ul pentru SIGINT
+    signal(SIGINT, handle_sigint);
+
+    // Inițializăm socket-ul serverului
+    server_socket = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_socket == 0) {
+        perror("Socket failed");
+        exit(EXIT_FAILURE);
+    }
+
+    // Permitem reutilizarea portului cu SO_REUSEADDR
+    int opt = 1;
+    setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.s_addr = INADDR_ANY;
+    server_addr.sin_port = htons(PORT);
+
+    // Asociem socket-ul cu portul
+    if (bind(server_socket, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+        perror("Bind failed");
+        close(server_socket);
+        exit(EXIT_FAILURE);
+    }
+
+    // Pornim serverul în modul de ascultare
+    if (listen(server_socket, 10) < 0) {
+        perror("Listen failed");
+        close(server_socket);
+        exit(EXIT_FAILURE);
+    }
+
+    printf("Serverul rulează pe portul %d...\n", PORT);
+
+    // Inițializăm array-ul pentru clienți
+    for (int i = 0; i < MAX_CLIENTS; i++) {
+        client_sockets[i] = 0;
+    }
+
+    while (1) {
+        // Resetează setul de socket-uri
+        FD_ZERO(&readfds);
+        FD_SET(server_socket, &readfds); // Adăugăm serverul în set
+        max_sd = server_socket;
+
+        // Adăugăm socket-urile clienților activi
+        for (int i = 0; i < MAX_CLIENTS; i++) {
+            int sd = client_sockets[i];
+            if (sd > 0) FD_SET(sd, &readfds);
+            if (sd > max_sd) max_sd = sd;
         }
 
-        if (strncmp("1", buff, strlen("1")) == 0)
-        {
-            write(connfd, register_request, strlen(register_request));
+        // Așteptăm activitate pe socket-uri
+        activity = select(max_sd + 1, &readfds, NULL, NULL, NULL);
+        if (activity < 0 && errno != EINTR) {
+            perror("Eroare la select()");
         }
-        else if (strncmp("2", buff, strlen("2")) == 0)
-        {
-            write(connfd, login_request, strlen(login_request));
-        }
-        else if (strncmp("REG:", buff, 4) == 0)
-        {
-            register_split_string(buff, username, private_username, password);
-            if (createUser(private_username, username, password))
-            {
-                printf("%sUser-ul nu a fost creat.%s\n", ERROR, RESET);
+
+        // Verificăm conexiuni noi
+        if (FD_ISSET(server_socket, &readfds)) {
+            new_socket = accept(server_socket, NULL, NULL);
+            if (new_socket < 0) {
+                perror("Accept failed");
+                continue;
             }
-            else
-                printf("%sUser creat cu succes%s\n", SUCCESS, RESET);
-        }
-        else if (strncmp("LGN:", buff, 4) == 0)
-        {
-            UserSessions login = loginUser(private_username, password, "todo");
-            if (!login.id)
-            {
-                printf("%sCeva nu a mers bine la logare%s\n", ERROR, RESET);
-            }
-            else
-            {
-                printf("%sLogat cu succes%s\n", SUCCESS, RESET);
-               char token_message[256];  // Make sure it's big enough
-                sprintf(token_message, "TKN:%li\n", login.token); // Add the newline
-                write(connfd, token_message, strlen(token_message));
+
+            printf("Client nou conectat, socket: %d\n", new_socket);
+
+            // Adăugăm clientul în lista de conexiuni
+            for (int i = 0; i < MAX_CLIENTS; i++) {
+                if (client_sockets[i] == 0) {
+                    client_sockets[i] = new_socket;
+                    break;
+                }
             }
         }
 
-        if (strncmp("ex", buff, 2) == 0)
-        {
-            terminate_connection(connfd);
-            break;
+        // Verificăm activitatea clienților existenți
+        for (int i = 0; i < MAX_CLIENTS; i++) {
+            int sd = client_sockets[i];
+
+            if (FD_ISSET(sd, &readfds)) {
+                int valread = read(sd, buffer, sizeof(buffer));
+                if (valread == 0) {
+                    // Clientul s-a deconectat
+                    printf("Client deconectat, socket: %d\n", sd);
+                    close(sd);
+                    client_sockets[i] = 0;
+                } else {
+                    buffer[valread] = '\0';
+                    // ============= COMMAND HANDLER =============
+                    for (int j = 0; command_table[j].command != NULL; j++) {
+                        if (!strcmp(buffer, command_table[j].command)) {
+                            command_table[j].handler(sd, &client_sockets[i]);
+                            break;
+                        }
+                    }
+                    // LOGS
+                    FILE *logs = fopen("../logs/activityRead.log", "a");
+                    if(logs != NULL) {
+                        time_t t = time(NULL);
+                        struct tm tm = *localtime(&t);
+                        char log[1212];
+                        sprintf(log, "D[%d-%02d-%02d] T[%02d:%02d:%02d] M[%s]\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, buffer);
+                        fputs(log, logs);
+                        fclose(logs);
+                    } else {
+                        printf("Logs not working properly\n");
+                    }
+                }
+            }
         }
     }
-}
 
-int main()
-{
-    int sockfd, connfd, len;
-    struct sockaddr_in servaddr, cli;
-
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd == -1)
-    {
-        printf("%sSocket creation failed...%s\n", ERROR, RESET);
-        exit(0);
-    }
-    else
-        printf("%sSocket successfully created..%s\n", SUCCESS, RESET);
-    bzero(&servaddr, sizeof(servaddr));
-
-    servaddr.sin_family = AF_INET;
-    servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    servaddr.sin_port = htons(PORT);
-
-    if ((bind(sockfd, (SA *)&servaddr, sizeof(servaddr))) != 0)
-    {
-        printf("%sSocket bind failed...%s\n", ERROR, RESET);
-        exit(0);
-    }
-    else
-        printf("%sSocket successfully binded..%s\n", SUCCESS, RESET);
-
-    if ((listen(sockfd, 5)) != 0)
-    {
-        printf("%sListen failed...%s\n", ERROR, RESET);
-        exit(0);
-    }
-    else
-        printf("%sServer listening..%s\n", SUCCESS, RESET);
-    len = sizeof(cli);
-
-    connfd = accept(sockfd, (SA *)&cli, &len);
-    if (connfd < 0)
-    {
-        printf("%sServer accept failed...%s\n", ERROR, RESET);
-        exit(0);
-    }
-    else
-    {
-        printf("%sServer accept the client...%s\n", SUCCESS, RESET);
-    }
-
-    handle_client(connfd, sockfd);
-
-    close(sockfd);
+    return 0;
 }
