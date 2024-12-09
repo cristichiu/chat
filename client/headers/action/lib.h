@@ -4,6 +4,8 @@
 #include "index.h"
 
 long int ldtoa(char *str);
-void verifyConnection(int rs, int cl);
+int verifyConnection(int rs, int cl);
+char *getSessionToken();
+char *getChatSessionToken();
 
 #endif

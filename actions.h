@@ -5,6 +5,10 @@
 #define a_register "register"
 #define a_whoami "whoami"
 #define a_create_grup "crtGrup"
+#define a_logoff "logOff"
+#define a_see_my_grups "sMyGrups"
+#define a_see_focus_grup "sFocGrup"
+#define a_add_new_member "aNeMem"
 
 typedef struct ARegister {
     char username[64];

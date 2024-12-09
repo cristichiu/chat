@@ -4,16 +4,24 @@
 #define PORT 8080
 
 // ========= MENU ACTIONS =========
-Menu a_menu[2][10] = {
+Menu a_menu[3][10] = {
     {
         {a_login, "Login", ma_login},
         {a_register, "Register", ma_register},
         {NULL, NULL, NULL},
     },
     {
-        {a_whoami, "who am i", ma_whoami},
-        {NULL, "log off", ma_logoff},
-        {a_create_grup, "creaza un grup", ma_create_grup},
+        {a_whoami, "Who am i", ma_whoami},
+        {a_create_grup, "Creaza un grup", ma_create_grup},
+        {a_see_my_grups, "Vezi toate grupurile tale", ma_see_my_grups},
+        {NULL, "Selecteaza un grup", ma_focus_grup},
+        {a_logoff, "Log off", ma_logoff},
+        {NULL, NULL, NULL},
+    },
+    {
+        {a_see_focus_grup, "Vezi grupul selectat", ma_see_focus_grup},
+        {a_add_new_member, "Adauga un nou membru", ma_add_new_member},
+        {NULL, "Deselecteaza acest grup", ma_grup_deselect},
         {NULL, NULL, NULL},
     }
 };
@@ -64,6 +72,13 @@ int main() {
             fread(&token, sizeof(long int), 1, sess);
             if(token) menuIndex = 1;
             fclose(sess);
+        }
+        FILE *chatSess = fopen(DB_chatSession, "rb");
+        if(sess != NULL && menuIndex == 1) {
+            long int token;
+            fread(&token, sizeof(long int), 1, chatSess);
+            if(token) menuIndex = 2;
+            fclose(chatSess);
         }
         printf("%sMeniu:\n", CYAN);
         int limit = 0;

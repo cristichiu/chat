@@ -27,12 +27,17 @@ Command command_table[] = {
     {a_login, handle_login},
     {a_whoami, handle_whoami},
     {a_create_grup, handle_create_grup},
+    {a_logoff, handle_logoff},
+    {a_see_my_grups, handle_see_my_grups},
+    {a_see_focus_grup, handle_see_focus_grup},
+    {a_add_new_member, handle_add_new_meber},
     {NULL, NULL}
 };
 // ==========================================
 
 int main() {
-    showTable(SHOW_GRUPS);
+    srand(time(NULL));
+    showTable(SHOW_USERS);
     int new_socket, max_sd, activity;
     struct sockaddr_in server_addr;
     fd_set readfds;
