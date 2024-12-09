@@ -41,33 +41,3 @@ void handle_register(int sd, int *socket) {
         send(sd, &res, sizeof(StringRes), 0);
     }
 }
-
-void handle_whoami(int sd, int *socket) {
-    char buffer[16];
-    int res = read(sd, buffer, sizeof(buffer));
-    buffer[res] = '\0';
-    if(res <= 0) {
-        printf("Client deconectat, socket: %d\n", sd);
-        close(sd);
-        *socket = 0;
-    } else {
-        StringRes res;
-        UserSessions session = getUserSessionByToken(ldtoa(buffer));
-        if(!session.id) {
-            sprintf(res.res, "Nu am putut gasi sesiunea ta");
-            res.status = 404;
-            send(sd, &res, sizeof(StringRes), 0);
-            return;
-        }
-        Users user = getUserByLInt(session.user_id, US_FOR_ID);
-        if(!user.id) {
-            sprintf(res.res, "Nu am putut gasi sesiunea ta");
-            res.status = 404;
-            send(sd, &res, sizeof(StringRes), 0);
-            return;
-        }
-        sprintf(res.res, "Esti cumva asta tu?:\nuser_public_id: %ld\nsession_token: %ld\nusername: %s\n", user.public_id, session.token, user.username);
-        res.status = 200;
-        send(sd, &res, sizeof(StringRes), 0);
-    }
-}

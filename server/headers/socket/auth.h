@@ -5,6 +5,5 @@
 
 void handle_login(int sd, int *socket);
 void handle_register(int sd, int *socket);
-void handle_whoami(int sd, int *socket);
 
 #endif

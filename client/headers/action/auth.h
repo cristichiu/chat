@@ -7,5 +7,6 @@ void ma_login(int cl);
 void ma_register(int cl);
 void ma_whoami(int cl);
 void ma_logoff(int cl);
+void ma_create_grup(int cl);
 
 #endif

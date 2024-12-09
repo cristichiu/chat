@@ -5,6 +5,7 @@
 #include "../../../actions.h"
 
 #include "auth.h"
+#include "authActions.h"
 
 #include "../lib.h"
 

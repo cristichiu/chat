@@ -26,15 +26,15 @@ Command command_table[] = {
     {a_register, handle_register},
     {a_login, handle_login},
     {a_whoami, handle_whoami},
+    {a_create_grup, handle_create_grup},
     {NULL, NULL}
 };
 // ==========================================
 
 int main() {
-    showTable(SHOW_USERS);
+    showTable(SHOW_GRUPS);
     int new_socket, max_sd, activity;
     struct sockaddr_in server_addr;
-    char buffer[1024];
     fd_set readfds;
 
     // Setăm handler-ul pentru SIGINT
@@ -119,6 +119,7 @@ int main() {
             int sd = client_sockets[i];
 
             if (FD_ISSET(sd, &readfds)) {
+                char buffer[1024];
                 int valread = read(sd, buffer, sizeof(buffer));
                 if (valread == 0) {
                     // Clientul s-a deconectat

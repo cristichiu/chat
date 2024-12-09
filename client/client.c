@@ -13,6 +13,7 @@ Menu a_menu[2][10] = {
     {
         {a_whoami, "who am i", ma_whoami},
         {NULL, "log off", ma_logoff},
+        {a_create_grup, "creaza un grup", ma_create_grup},
         {NULL, NULL, NULL},
     }
 };
@@ -65,12 +66,15 @@ int main() {
             fclose(sess);
         }
         printf("%sMeniu:\n", CYAN);
-        for(int i=0; a_menu[menuIndex][i].instruction != NULL; i++) printf("%d: %s\n", i+1, a_menu[menuIndex][i].instruction);
+        int limit = 0;
+        for(int i=0; a_menu[menuIndex][i].instruction != NULL; i++) {
+            printf("%d: %s\n", i+1, a_menu[menuIndex][i].instruction);
+            limit++;
+        }
         printf("%s", RESET);
         int option; scanf("%d", &option);
-        if(a_menu[menuIndex][option-1].action != NULL) send(client_socket, a_menu[menuIndex][option-1].action, sizeof(a_menu[menuIndex][option-1].action ), 0);
-        if(option >= 1 && option <= 2) a_menu[menuIndex][option-1].handler(client_socket);
-
+        if(a_menu[menuIndex][option-1].action != NULL) send(client_socket, a_menu[menuIndex][option-1].action, sizeof(a_menu[menuIndex][option-1].action), 0);
+        if(option >= 1 && option <= limit) a_menu[menuIndex][option-1].handler(client_socket);
     }
 
     close(client_socket);

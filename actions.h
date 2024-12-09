@@ -4,6 +4,7 @@
 #define a_login "login"
 #define a_register "register"
 #define a_whoami "whoami"
+#define a_create_grup "crtGrup"
 
 typedef struct ARegister {
     char username[64];

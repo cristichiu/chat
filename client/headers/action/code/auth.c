@@ -40,8 +40,11 @@ void ma_register(int cl) {
 
 void ma_whoami(int cl) {
     FILE *file = fopen("../db/session.chat", "rb");
+    StringRes res;
     if(file == NULL) {
         send(cl, "0", 16, 0);
+        verifyConnection(recv(cl, &res, sizeof(StringRes), 0), cl);
+        printf("%d\n%s", res.status, res.res);
     } else {
         long int token;
         char cToken[16];
@@ -49,7 +52,6 @@ void ma_whoami(int cl) {
         sprintf(cToken, "%ld", token);
         send(cl, cToken, 16, 0);
         fclose(file);
-        StringRes res;
         verifyConnection(recv(cl, &res, sizeof(StringRes), 0), cl);
         printf("%d\n%s", res.status, res.res);
     }
@@ -62,4 +64,29 @@ void ma_logoff(int cl) {
     fwrite(&reset, sizeof(long int), 1, file);
     fclose(file);
     return;
+}
+
+void ma_create_grup(int cl) {
+    FILE *file = fopen("../db/session.chat", "rb");
+    StringRes res;
+    if(file == NULL) {
+        send(cl, "0", 16, 0);
+    } else {
+        long int token;
+        char cToken[16];
+        fread(&token, sizeof(long int), 1, file);
+        sprintf(cToken, "%ld", token);
+        send(cl, cToken, 16, 0);
+        fclose(file);
+    }
+    verifyConnection(recv(cl, &res, sizeof(StringRes), 0), cl);
+    if(res.status == 200) {
+        char grupName[64];
+        printf("Grup name: "); scanf("%s", grupName);
+        send(cl, grupName, sizeof(grupName), 0);
+        verifyConnection(recv(cl, &res, sizeof(StringRes), 0), cl);
+        printf("%d - %s\n", res.status, res.res);
+    } else {
+        printf("%d - %s\n", res.status, res.res);
+    }
 }
