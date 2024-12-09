@@ -3,8 +3,8 @@
 .vscode/settings.json
 .vscode/tasks.json
 .vscode/launch.json
-/server/bin
+bin
 /server/DB
+/client/db
 *.chat
-client/client
-server/makefile
+logs

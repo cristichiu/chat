@@ -1,17 +1,22 @@
-#include <arpa/inet.h> 
-#include <netdb.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <strings.h> 
-#include <sys/socket.h>
-#include <unistd.h> 
-#include <time.h>
-#include <stdlib.h>
+#include "./headers/action/index.h"
+#include "../actions.h"
 
-#define MAX 80
 #define PORT 8080
-#define SA struct sockaddr
+
+// ========= MENU ACTIONS =========
+Menu a_menu[2][10] = {
+    {
+        {a_login, "Login", ma_login},
+        {a_register, "Register", ma_register},
+        {NULL, NULL, NULL},
+    },
+    {
+        {a_whoami, "who am i", ma_whoami},
+        {NULL, "log off", ma_logoff},
+        {NULL, NULL, NULL},
+    }
+};
+// ================================
 
 #define ERROR "\033[0;31m"
 #define SUCCESS "\033[0;32m"
@@ -22,134 +27,52 @@
 #define WHITE "\033[0;37m"
 #define RESET "\033[0m"
 
-long long token = 0;
+int main() {
+    int client_socket;
+    struct sockaddr_in server_addr;
+    pthread_t recv_thread;
 
-void handle_registration_request(int sockfd) {
-    printf("\n%s######  Registration requested by server  ######%s\n", CYAN, RESET);
+    // Creăm socket-ul
+    client_socket = socket(AF_INET, SOCK_STREAM, 0);
+    if (client_socket < 0) {
+        perror("Socket failed");
+        exit(EXIT_FAILURE);
+    }
 
-    char username[MAX], private_username[MAX], password[MAX];
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(PORT);
+    server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
-    printf("%sEnter Username: %s", AUTH, RESET);
-    bzero(username, sizeof(username));
-    fgets(username, sizeof(username), stdin);
-    username[strcspn(username, "\n")] = '\0'; 
+    // Conectăm clientul la server
+    if (connect(client_socket, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+        perror("Connect failed");
+        close(client_socket);
+        exit(EXIT_FAILURE);
+    }
 
-    printf("%sEnter Private Username: %s", AUTH, RESET);
-    bzero(private_username, sizeof(private_username));
-    fgets(private_username, sizeof(private_username), stdin);
-    private_username[strcspn(private_username, "\n")] = '\0'; 
+    // pthread_create(&recv_thread, NULL, receive_messages, &client_socket);
 
-    printf("%sEnter Password: %s", AUTH, RESET);
-    bzero(password, sizeof(password));
-    fgets(password, sizeof(password), stdin);
-    password[strcspn(password, "\n")] = '\0'; 
-
-    char reg_data[MAX];
-    // >!# used for delimiting the string 
-    snprintf(reg_data, sizeof(reg_data), "REG:%s>!#%s>!#%s", username, private_username, password);
-    write(sockfd, reg_data, sizeof(reg_data));
-
-    printf("%s######  Registration data sent to server  ######%s\n", CYAN, RESET);
-}
-
-void handle_login_request(int sockfd) {
-    printf("\n%s######  Login requested by server  ######%s\n", CYAN, RESET);
-
-    char private_username[MAX], password[MAX];
-
-    printf("%sEnter Private Username: %s", AUTH, RESET);
-    bzero(private_username, sizeof(private_username));
-    fgets(private_username, sizeof(private_username), stdin);
-    private_username[strcspn(private_username, "\n")] = '\0'; 
-
-    printf("%sEnter Password: %s", AUTH, RESET);
-    bzero(password, sizeof(password));
-    fgets(password, sizeof(password), stdin);
-    password[strcspn(password, "\n")] = '\0'; 
-
-    char reg_data[MAX];
-    // >!# used for delimiting the string 
-    snprintf(reg_data, sizeof(reg_data), "LGN:%s>!#%s", private_username, password);
-    write(sockfd, reg_data, sizeof(reg_data));
-
-    printf("%s######  Login data sent to server  ######%s\n", CYAN, RESET);
-}
-
-void handle_client(int sockfd, int connfd)
-{
-    char buff[MAX];
-    int n;
-    int wait_response = 0;
-    for (;;) {
-        bzero(buff, sizeof(buff));
-
-        if (wait_response == 0) {
-        printf("%sEnter  : %s", USER, RESET);
-        n = 0;
-        while ((buff[n++] = getchar()) != '\n');
-
-        write(sockfd, buff, sizeof(buff));
-        bzero(buff, sizeof(buff));
+    // Trimitem mesaje către server
+    char buffer[1024];
+    while (1) {
+        // ========= HANDLER =========
+        int menuIndex = 0;
+        FILE *sess = fopen("../db/session.chat", "rb");
+        if(sess != NULL) {
+            long int token;
+            fread(&token, sizeof(long int), 1, sess);
+            if(token) menuIndex = 1;
+            fclose(sess);
         }
+        printf("%sMeniu:\n", CYAN);
+        for(int i=0; a_menu[menuIndex][i].instruction != NULL; i++) printf("%d: %s\n", i+1, a_menu[menuIndex][i].instruction);
+        printf("%s", RESET);
+        int option; scanf("%d", &option);
+        if(a_menu[menuIndex][option-1].action != NULL) send(client_socket, a_menu[menuIndex][option-1].action, sizeof(a_menu[menuIndex][option-1].action ), 0);
+        if(option >= 1 && option <= 2) a_menu[menuIndex][option-1].handler(client_socket);
 
-        read(sockfd, buff, sizeof(buff));
-        printf("%sServer : %s%s%s\n", CYAN, WHITE, buff, RESET);
-
-
-        if ((strncmp(buff, "reg_request", strlen("reg_request"))) == 0) {
-               handle_registration_request(sockfd);
-               //wait_response = 1;
-        } else if ((strncmp(buff, "lgn_request", strlen("lgn_request"))) == 0) {
-               handle_login_request(sockfd);
-               wait_response = 1;
-        } else if ((strncmp(buff, "TKN", 3)) == 0) {
-            token = atoll(buff + 4);
-            wait_response = 0;
-        } else if ((strncmp(buff, "ex", 2)) == 0) {
-            printf("%sClient Exit...\n%s", ERROR, RESET);
-            close(sockfd);
-            close(connfd);
-            exit(0);
-            break;
-        } 
     }
-}
 
-int main()
-{
-    srand(time(NULL));
-    int sockfd, connfd;
-    struct sockaddr_in servaddr, cli;
-
-    // socket create and verification
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd == -1) {
-        printf("%ssocket creation failed...\n%s", ERROR, RESET);
-        exit(0);
-    }
-    else
-        printf("%sSocket successfully created..\n%s", SUCCESS, RESET);
-    bzero(&servaddr, sizeof(servaddr));
-
-    char ip_address[16]; 
-    snprintf(ip_address, sizeof(ip_address), "127.0.0.%d", 128);
-    servaddr.sin_family = AF_INET;
-    servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
-    servaddr.sin_port = htons(PORT);
-
-    if (connect(sockfd, (SA*)&servaddr, sizeof(servaddr)) != 0) {
-        printf("%sconnection with the server failed...\n%s", ERROR, RESET);
-        perror("connect"); 
-        exit(0);
-    }
-    else {
-        printf("%sconnected to the server..\n%s", SUCCESS, RESET);
-        printf("%sChoose an option:\n1. Register\n2. Login\n%s", USER, RESET);
-    } 
-
-    // function for chat
-    handle_client(sockfd, connfd);
-
-    // close the socket
-    close(sockfd);
+    close(client_socket);
+    return 0;
 }

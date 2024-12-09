@@ -1,14 +1,6 @@
+#include "../actions.h"
 #include "./headers/db/index.h"
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <arpa/inet.h>
-#include <sys/socket.h>
-#include <sys/select.h>
-#include <signal.h>
-#include <errno.h>
+#include "./headers/socket/index.h"
 
 #define PORT 8080
 #define MAX_CLIENTS 100
@@ -29,15 +21,17 @@ void handle_sigint(int sig) {
     exit(0);
 }
 
-long int ldtoa(char *str) {
-    long int res = 0;
-    for(int i=0; i<strlen(str); i++) {
-        res = res*10+(str[i]-'0');
-    }
-    return res;
-}
+// ================ COMMANDS ================
+Command command_table[] = {
+    {a_register, handle_register},
+    {a_login, handle_login},
+    {a_whoami, handle_whoami},
+    {NULL, NULL}
+};
+// ==========================================
 
 int main() {
+    showTable(SHOW_USERS);
     int new_socket, max_sd, activity;
     struct sockaddr_in server_addr;
     char buffer[1024];
@@ -133,75 +127,24 @@ int main() {
                     client_sockets[i] = 0;
                 } else {
                     buffer[valread] = '\0';
-                    char *token = strtok(buffer, "<!>");
-                    if(!strcmp(token, "register")) {
-                        token = strtok(NULL, "<!>");
-                        if(token == NULL) {
-                            send(sd, "Nu ai scris username-ul\n", 100, 0);
+                    // ============= COMMAND HANDLER =============
+                    for (int j = 0; command_table[j].command != NULL; j++) {
+                        if (!strcmp(buffer, command_table[j].command)) {
+                            command_table[j].handler(sd, &client_sockets[i]);
                             break;
-                        }
-                        char username[64];
-                        strcpy(username, token);
-                        token = strtok(NULL, "<!>");
-                        if(token == NULL) {
-                            send(sd, "Nu ai scris private username-ul\n", 100, 0);
-                            break;
-                        }
-                        char private_username[64];
-                        strcpy(private_username, token);
-                        token = strtok(NULL, "<!>");
-                        if(token == NULL) {
-                            send(sd, "Nu ai scris password-ul\n", 100, 0);
-                            break;
-                        }
-                        char password[64];
-                        strcpy(password, token);
-
-                        if(createUser(private_username, username, password)) {
-                            send(sd, "Ceva nu a mers bine, nu am putut crea utilizatorul\n", 100, 0);
-                        } else send(sd, "User creat cu succes\n", 100, 0);
-                    }
-                    if(!strcmp(token, "login")) {
-                        token = strtok(NULL, "<!>");
-                        if(token == NULL) {
-                            send(sd, "Nu ai scris private username-ul\n", 100, 0);
-                            break;
-                        }
-                        char private_username[64];
-                        strcpy(private_username, token);
-                        token = strtok(NULL, "<!>");
-                        if(token == NULL) {
-                            send(sd, "Nu ai scris password-ul\n", 100, 0);
-                            break;
-                        }
-                        char password[64];
-                        strcpy(password, token);
-
-                        UserSessions login = loginUser(private_username, password, "todo");
-                        if(!login.id) {
-                            send(sd, "Asa utilizator nu exista\n", 100, 0);
-                        } else {
-                            char token[100];
-                            sprintf(token, "session<!>%ld", login.token);
-                            send(sd, token, 100, 0);
                         }
                     }
-                    if(!strcmp(token, "auth")) {
-                        token = strtok(NULL, "<!>");
-                        if(token == NULL) {
-                            printf("Nu esti autentificat");
-                            break;
-                        }
-                        UserSessions session = getUserSessionByToken(ldtoa(token));
-                        if(!session.id) { send(sd, "Ceva nu a mers bine, nu am putut gasi sesiunea ta!\n", 100, 0); break; }
-                        Users user = getUserByLInt(session.user_id, US_FOR_ID);
-                        if(!user.id) { send(sd, "Ceva nu a mers bine nu am putut gasi userul dupa sesiune\n", 100, 0); break; }
-                        token = strtok(NULL, "<!>");
-                        if(!strcmp(token, "whoami")) {
-                            char res[100];
-                            sprintf(res, "Esti cumva asta tu?: %ld - %ld - %s\n", user.public_id, session.token, user.username);
-                            send(sd, res, 100, 0);
-                        }
+                    // LOGS
+                    FILE *logs = fopen("../logs/activityRead.log", "a");
+                    if(logs != NULL) {
+                        time_t t = time(NULL);
+                        struct tm tm = *localtime(&t);
+                        char log[1212];
+                        sprintf(log, "D[%d-%02d-%02d] T[%02d:%02d:%02d] M[%s]\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, buffer);
+                        fputs(log, logs);
+                        fclose(logs);
+                    } else {
+                        printf("Logs not working properly\n");
                     }
                 }
             }

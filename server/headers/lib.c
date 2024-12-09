@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define ERROR "\033[0;31m"
 #define SUCCESS "\033[0;32m"
@@ -45,4 +46,12 @@ long int generate_token() {
 void clear_stdin() {
     int c;
     while ((c = getchar()) != '\n' && c != EOF); // Consumăm caracterele rămase
+}
+
+long int ldtoa(char *str) {
+    long int res = 0;
+    for(int i=0; i<strlen(str); i++) {
+        res = res*10+(str[i]-'0');
+    }
+    return res;
 }
