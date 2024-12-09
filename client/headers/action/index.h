@@ -12,6 +12,8 @@
 #include "lib.h"
 #include "../../../actions.h"
 
+#define DB_sessions "../DB/session.chat"
+
 typedef struct Menu {
     char *action;
     char *instruction;

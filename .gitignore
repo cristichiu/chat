@@ -4,5 +4,6 @@
 .vscode/tasks.json
 .vscode/launch.json
 bin
+DB
 *.chat
 logs

@@ -17,7 +17,7 @@ void ma_login(int cl) {
     StringRes res;
     verifyConnection(recv(cl, &res, sizeof(StringRes), 0), cl);
     if(res.status == 200) {
-        FILE *newSess = fopen("../db/session.chat", "wb");
+        FILE *newSess = fopen(DB_sessions, "wb");
         if(newSess == NULL) return;
         long int iToken = ldtoa(res.res);
         fwrite(&iToken, sizeof(long int), 1, newSess);
@@ -39,7 +39,7 @@ void ma_register(int cl) {
 }
 
 void ma_whoami(int cl) {
-    FILE *file = fopen("../db/session.chat", "rb");
+    FILE *file = fopen(DB_sessions, "rb");
     StringRes res;
     if(file == NULL) {
         send(cl, "0", 16, 0);
@@ -58,7 +58,7 @@ void ma_whoami(int cl) {
 }
 
 void ma_logoff(int cl) {
-    FILE *file = fopen("../db/session.chat", "wb");
+    FILE *file = fopen(DB_sessions, "wb");
     if(file == NULL) return;
     long int reset = 0;
     fwrite(&reset, sizeof(long int), 1, file);
@@ -67,7 +67,7 @@ void ma_logoff(int cl) {
 }
 
 void ma_create_grup(int cl) {
-    FILE *file = fopen("../db/session.chat", "rb");
+    FILE *file = fopen(DB_sessions, "rb");
     StringRes res;
     if(file == NULL) {
         send(cl, "0", 16, 0);

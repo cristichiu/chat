@@ -58,7 +58,7 @@ int main() {
     while (1) {
         // ========= HANDLER =========
         int menuIndex = 0;
-        FILE *sess = fopen("../db/session.chat", "rb");
+        FILE *sess = fopen(DB_sessions, "rb");
         if(sess != NULL) {
             long int token;
             fread(&token, sizeof(long int), 1, sess);
