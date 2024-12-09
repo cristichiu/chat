@@ -25,7 +25,7 @@ void showTable(ShowTableOption option) {
     switch(option) {
         case SHOW_USERS: {
             FILE *file = fopen(c_users, "rb");
-            if(file == NULL) { printf("File not found."); break; }
+            if(file == NULL) { printf("File not found.\n"); break; }
             Users buffer;
             printf("ID | PUBLIC_ID | PRIVATE_USERNAME | PASSWORD | USERNAME | DELETED\n");
             while(fread(&buffer, sizeof(Users), 1, file)) {
@@ -36,7 +36,7 @@ void showTable(ShowTableOption option) {
         }
         case SHOW_GRUPS: {
             FILE *file = fopen(c_grups, "rb");
-            if(file == NULL) { printf("File not found."); break; }
+            if(file == NULL) { printf("File not found.\n"); break; }
             Grups buffer;
             printf("ID | PUBLIC_ID | OWNER | NAME | DELETED\n");
             while(fread(&buffer, sizeof(Grups), 1, file)) {
@@ -47,7 +47,7 @@ void showTable(ShowTableOption option) {
         }
         case SHOW_GRUP_MEMBERS: {
             FILE *file = fopen(c_grup_members, "rb");
-            if(file == NULL) { printf("File not found."); break; }
+            if(file == NULL) { printf("File not found.\n"); break; }
             GrupMembers buffer;
             printf("USER_ID | GRUP_ID | ACCEPTED_BY_USER | PERMISSIONS | DELETED\n");
             while(fread(&buffer, sizeof(GrupMembers), 1, file)) {
@@ -58,7 +58,7 @@ void showTable(ShowTableOption option) {
         }
         case SHOW_MESSAGES: {
             FILE *file = fopen(c_grup_messages, "rb");
-            if(file == NULL) { printf("File not found."); break; }
+            if(file == NULL) { printf("File not found.\n"); break; }
             Messages buffer;
             printf("ID | PUBLIC_ID | GRUP_ID | USER_ID | MESSAGE | DELETED\n");
             while(fread(&buffer, sizeof(Messages), 1, file)) {
@@ -69,7 +69,7 @@ void showTable(ShowTableOption option) {
         }
         case SHOW_SESSIONS: {
             FILE *file = fopen(c_sessions, "rb");
-            if(file == NULL) { printf("File not found."); break; }
+            if(file == NULL) { printf("File not found.\n"); break; }
             UserSessions buffer;
             printf("ID | USER_ID | TOKEN | IP | DELETED\n");
             while(fread(&buffer, sizeof(UserSessions), 1, file)) {

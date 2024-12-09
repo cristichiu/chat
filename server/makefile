@@ -1,7 +1,7 @@
 BIN = bin
 HEADERS = headers
 HEADERS_BIN = $(BIN)/$(HEADERS)
-HEADERS_ALL = $(HEADERS_BIN)/user.o $(HEADERS_BIN)/lib.o $(HEADERS_BIN)/grup.o $(HEADERS_BIN)/utilities.o $(HEADERS_BIN)/message.o $(HEADERS_BIN)/auth.o $(HEADERS_BIN)/authActions.o
+HEADERS_ALL = $(HEADERS_BIN)/user.o $(HEADERS_BIN)/lib.o $(HEADERS_BIN)/grup.o $(HEADERS_BIN)/utilities.o $(HEADERS_BIN)/message.o $(HEADERS_BIN)/auth.o $(HEADERS_BIN)/authActions.o $(HEADERS_BIN)/authUtilities.o $(HEADERS_BIN)/grupActions.o
 MAINC = main.c
 
 all: clear $(BIN)/main.exe
@@ -19,6 +19,10 @@ $(HEADERS_BIN)/authActions.o: $(HEADERS_BIN)
 	gcc -c $(HEADERS)/socket/code/authActions.c -o $(HEADERS_BIN)/authActions.o
 $(HEADERS_BIN)/auth.o: $(HEADERS_BIN)
 	gcc -c $(HEADERS)/socket/code/auth.c -o $(HEADERS_BIN)/auth.o
+$(HEADERS_BIN)/authUtilities.o: $(HEADERS_BIN)
+	gcc -c $(HEADERS)/socket/code/authUtilities.c -o $(HEADERS_BIN)/authUtilities.o
+$(HEADERS_BIN)/grupActions.o: $(HEADERS_BIN)
+	gcc -c $(HEADERS)/socket/code/grupActions.c -o $(HEADERS_BIN)/grupActions.o
 $(HEADERS_BIN)/grup.o: $(HEADERS_BIN)
 	gcc -c $(HEADERS)/db/code/grup.c -o $(HEADERS_BIN)/grup.o
 $(HEADERS_BIN)/utilities.o: $(HEADERS_BIN)

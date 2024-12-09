@@ -5,5 +5,7 @@
 
 void handle_whoami(int sd, int *socket);
 void handle_create_grup(int sd, int *socket);
+void handle_logoff(int sd, int *socket);
+void handle_see_my_grups(int sd, int *socket);
 
 #endif

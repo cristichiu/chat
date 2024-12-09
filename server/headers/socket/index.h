@@ -6,6 +6,8 @@
 
 #include "auth.h"
 #include "authActions.h"
+#include "grupActions.h"
+#include "authUtilities.h"
 
 #include "../lib.h"
 
