@@ -9,6 +9,12 @@
 #define a_see_my_grups "sMyGrups"
 #define a_see_focus_grup "sFocGrup"
 #define a_add_new_member "aNeMem"
+#define a_see_grup_members "sGrupMe"
+#define a_write_message "wrtMsg"
+#define a_accept_grup_inv "aGrupIn"
+#define a_see_grup_messages "sGrupM"
+
+#define MAX_LENGTH_IN_RES 1024
 
 typedef struct ARegister {
     char username[64];
@@ -23,7 +29,7 @@ typedef struct ALogin {
 
 typedef struct StringRes {
     int status;
-    char res[1024];
+    char res[MAX_LENGTH_IN_RES];
 } StringRes;
 
 #endif

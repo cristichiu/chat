@@ -86,10 +86,12 @@ void handle_see_my_grups(int sd, int *socket) {
     while(allMyGrups[count].user_id) {
         Grups grup = getGrupByLId(allMyGrups[count].grup_id, GS_FOR_ID);
         if(grup.id) {
-            char *add = (char*)malloc(200*sizeof(char));
-            sprintf(add, "%s%ld - %s - %d (%d%d)\n", res.res, grup.public_id, grup.name, allMyGrups[count].permissions, allMyGrups[count].accept_by_user, grup.owner == user.id);
-            snprintf(res.res, strlen(add)*sizeof(char)+1, "%s", add);
-            free(add);
+            int current_length = strlen(res.res);
+            int remaining_space = MAX_LENGTH_IN_RES - current_length;
+            int needed_space = snprintf(NULL, 0, "%ld - %s - %d (%d%d)\n", grup.public_id, grup.name, allMyGrups[count].permissions, allMyGrups[count].accept_by_user, grup.owner == user.id);
+            if (needed_space + 1 <= remaining_space) {
+                snprintf(res.res + current_length, remaining_space, "%ld - %s - %d (%d%d)\n", grup.public_id, grup.name, allMyGrups[count].permissions, allMyGrups[count].accept_by_user, grup.owner == user.id);
+            }
         }
         count++;
     }

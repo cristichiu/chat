@@ -31,13 +31,17 @@ Command command_table[] = {
     {a_see_my_grups, handle_see_my_grups},
     {a_see_focus_grup, handle_see_focus_grup},
     {a_add_new_member, handle_add_new_meber},
+    {a_see_grup_members, handle_see_grup_members},
+    {a_write_message, handle_write_message},
+    {a_accept_grup_inv, handle_accept_grup_inv},
+    {a_see_grup_messages, handle_see_grup_messages},
     {NULL, NULL}
 };
 // ==========================================
 
 int main() {
     srand(time(NULL));
-    showTable(SHOW_USERS);
+    showTable(SHOW_GRUPS);
     int new_socket, max_sd, activity;
     struct sockaddr_in server_addr;
     fd_set readfds;
