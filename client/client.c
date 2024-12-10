@@ -21,6 +21,10 @@ Menu a_menu[3][10] = {
     {
         {a_see_focus_grup, "Vezi grupul selectat", ma_see_focus_grup},
         {a_add_new_member, "Adauga un nou membru", ma_add_new_member},
+        {a_see_grup_members, "Vezi toti utilizatorii din grup", ma_see_all_grup_members},
+        {a_accept_grup_inv, "Acepta invitatia intr-un grup", ma_accept_grup_inv},
+        {a_write_message, "Scrie un mesaj in acest grup", ma_write_message},
+        {a_see_grup_messages, "Vezi toate mesajele din acest grup", ma_see_all_grup_messages},
         {NULL, "Deselecteaza acest grup", ma_grup_deselect},
         {NULL, NULL, NULL},
     }
