@@ -93,7 +93,7 @@ void handle_see_my_grups(int sd, int *socket) {
                 snprintf(res.res + current_length, remaining_space, "%ld - %s - %d (%d%d)\n", grup.public_id, grup.name, allMyGrups[count].permissions, allMyGrups[count].accept_by_user, grup.owner == user.id);
             }
         }
-        count++;
+       count++;
     }
     res.status = 200;
     send(sd, &res, sizeof(StringRes), 0);

@@ -122,6 +122,7 @@ Grups *getGrupsByOwner(long int search) {
             grups[capacity-1] = buffer;
             capacity++;
             grups = (Grups*)realloc(grups, sizeof(Grups)*capacity);
+            grups[capacity-1].id = 0;
         }
     }
     fclose(find);
@@ -157,6 +158,7 @@ GrupMembers *getAllGrupMembers(long int grup_id) {
             members[capacity-1] = buffer;
             capacity++;
             members = (GrupMembers*)realloc(members, sizeof(GrupMembers)*capacity);
+            members[capacity-1].user_id = 0;
         }
     }
     fclose(find);
@@ -164,17 +166,19 @@ GrupMembers *getAllGrupMembers(long int grup_id) {
 }
 
 GrupMembers *getAllMyGrups(long int user_id) {
-    int capacity = 0;
-    GrupMembers *members = NULL;
-    GrupMembers buffer = {0};
+    int capacity = 1;
+    GrupMembers *members = (GrupMembers*)malloc(sizeof(GrupMembers) * capacity);
+    GrupMembers buffer;
     buffer.user_id = 0;
     members[0] = buffer;
     FILE *find = fopen(c_grup_members, "rb");
     if(find == NULL) return members;
     while(fread(&buffer, sizeof(GrupMembers), 1, find)) {
         if(buffer.user_id == user_id && !buffer.deleted) {
-            members = (GrupMembers*)realloc(members, sizeof(GrupMembers)*++capacity);
             members[capacity-1] = buffer;
+            capacity++;
+            members = (GrupMembers*)realloc(members, sizeof(GrupMembers)*capacity);
+            members[capacity-1].user_id = 0;
         }
     }
     fclose(find);

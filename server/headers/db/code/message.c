@@ -76,6 +76,7 @@ Messages *getMessagesByLInt(long int search, IntMessagesSearch searchFor) {
                     msg[capacity-1] = buffer;
                     capacity++;
                     msg = (Messages*)realloc(msg, sizeof(Messages) * capacity);
+                    msg[capacity-1].id = 0;
                 }
             }
             fclose(find);
