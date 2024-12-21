@@ -5,7 +5,9 @@
 #define PORT 8080
 #define MAX_CLIENTS 100
 
-int server_socket, client_sockets[MAX_CLIENTS];
+int server_socket;
+SSL_CTX *ctx;
+Client client_sockets[MAX_CLIENTS];
 
 // Funcția de oprire sigură a serverului la Ctrl+C
 void handle_sigint(int sig) {
@@ -13,11 +15,15 @@ void handle_sigint(int sig) {
 
     // Închidem toate conexiunile active
     for (int i = 0; i < MAX_CLIENTS; i++) {
-        if (client_sockets[i] != 0) {
-            close(client_sockets[i]);
+        if (client_sockets[i].socket != 0) {
+            close(client_sockets[i].socket);
+            SSL_shutdown(client_sockets[i].ssl);
+            SSL_free(client_sockets[i].ssl);
         }
     }
     close(server_socket); // Închidem socket-ul serverului
+    SSL_CTX_free(ctx);
+    EVP_cleanup();
     exit(0);
 }
 
@@ -39,12 +45,42 @@ Command command_table[] = {
 };
 // ==========================================
 
+// ======== SSL encryption ========
+void init_openssl() {
+    SSL_library_init();
+    SSL_load_error_strings();
+    OpenSSL_add_all_algorithms();
+}
+
+SSL_CTX *create_context() {
+    SSL_CTX *ctx = SSL_CTX_new(TLS_server_method());
+    if(!ctx) {
+        perror("SLL_CTX error");
+        exit(EXIT_FAILURE);
+    }
+    return ctx;
+}
+
+void context_config(SSL_CTX *ctx) {
+    if(SSL_CTX_use_certificate_file(ctx, "../ssl/cert.pem", SSL_FILETYPE_PEM) <= 0) {
+        ERR_print_errors_fp(stderr);
+        exit(EXIT_FAILURE);
+    }
+    if(SSL_CTX_use_PrivateKey_file(ctx, "../ssl/key.pem", SSL_FILETYPE_PEM) <= 0) {
+        ERR_print_errors_fp(stderr);
+        exit(EXIT_FAILURE);
+    }
+}
+
 int main() {
     srand(time(NULL));
-    showTable(SHOW_GRUPS);
     int new_socket, max_sd, activity;
     struct sockaddr_in server_addr;
     fd_set readfds;
+
+    init_openssl();
+    ctx = create_context();
+    context_config(ctx);
 
     // Setăm handler-ul pentru SIGINT
     signal(SIGINT, handle_sigint);
@@ -82,7 +118,8 @@ int main() {
 
     // Inițializăm array-ul pentru clienți
     for (int i = 0; i < MAX_CLIENTS; i++) {
-        client_sockets[i] = 0;
+        client_sockets[i].socket = 0;
+        client_sockets[i].ssl = NULL;
     }
 
     while (1) {
@@ -93,7 +130,7 @@ int main() {
 
         // Adăugăm socket-urile clienților activi
         for (int i = 0; i < MAX_CLIENTS; i++) {
-            int sd = client_sockets[i];
+            int sd = client_sockets[i].socket;
             if (sd > 0) FD_SET(sd, &readfds);
             if (sd > max_sd) max_sd = sd;
         }
@@ -116,8 +153,19 @@ int main() {
 
             // Adăugăm clientul în lista de conexiuni
             for (int i = 0; i < MAX_CLIENTS; i++) {
-                if (client_sockets[i] == 0) {
-                    client_sockets[i] = new_socket;
+                if (client_sockets[i].socket == 0) {
+                    client_sockets[i].socket = new_socket;
+                    client_sockets[i].ssl = SSL_new(ctx);
+                    SSL_set_fd(client_sockets[i].ssl, new_socket);
+                    if(SSL_accept(client_sockets[i].ssl) <= 0) {
+                        ERR_print_errors_fp(stderr);
+                        close(new_socket);
+                        SSL_shutdown(client_sockets[i].ssl);
+                        SSL_free(client_sockets[i].ssl);
+                        client_sockets[i].ssl = NULL;
+                        client_sockets[i].socket = 0;
+                        continue;
+                    }
                     break;
                 }
             }
@@ -125,7 +173,8 @@ int main() {
 
         // Verificăm activitatea clienților existenți
         for (int i = 0; i < MAX_CLIENTS; i++) {
-            int sd = client_sockets[i];
+            int sd = client_sockets[i].socket;
+            SSL *sl = client_sockets[i].ssl;
 
             if (FD_ISSET(sd, &readfds)) {
                 char buffer[1024];
@@ -134,13 +183,16 @@ int main() {
                     // Clientul s-a deconectat
                     printf("Client deconectat, socket: %d\n", sd);
                     close(sd);
-                    client_sockets[i] = 0;
+                    SSL_shutdown(client_sockets[i].ssl);
+                    SSL_free(client_sockets[i].ssl);
+                    client_sockets[i].ssl = NULL;
+                    client_sockets[i].socket = 0;
                 } else {
                     buffer[valread] = '\0';
                     // ============= COMMAND HANDLER =============
                     for (int j = 0; command_table[j].command != NULL; j++) {
                         if (!strcmp(buffer, command_table[j].command)) {
-                            command_table[j].handler(sd, &client_sockets[i]);
+                            command_table[j].handler(&client_sockets[i]);
                             break;
                         }
                     }

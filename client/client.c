@@ -1,5 +1,6 @@
 #include "./headers/action/index.h"
 #include "../actions.h"
+#include <signal.h>
 
 #define PORT 8080
 
@@ -31,6 +32,8 @@ Menu a_menu[3][10] = {
 };
 // ================================
 
+int client_socket;
+
 #define ERROR "\033[0;31m"
 #define SUCCESS "\033[0;32m"
 #define USER "\033[0;33m"
@@ -40,8 +43,82 @@ Menu a_menu[3][10] = {
 #define WHITE "\033[0;37m"
 #define RESET "\033[0m"
 
+SSL_CTX *ctx;
+SSL *ssl;
+
+void init_openssl() {
+    SSL_library_init();
+    SSL_load_error_strings();
+    OpenSSL_add_all_algorithms();
+}
+
+SSL_CTX *create_context() {
+    SSL_CTX *ctx = SSL_CTX_new(TLS_client_method());
+    if(!ctx) {
+        perror("SSL_CTX error");
+        exit(EXIT_FAILURE);
+    }
+    return ctx;
+}
+
+void handle_sigint(int sig) {
+    printf("\nClose...\n");
+    close(client_socket);
+    SSL_shutdown(ssl);
+    SSL_free(ssl);
+    SSL_CTX_free(ctx);
+    exit(0);
+}
+
+int processIn = 0;
+
+void r_handle_save_token(StringRes res) {
+    FILE *newSess = fopen(DB_sessions, "wb");
+    if(newSess != NULL) {
+        long int iToken = ldtoa(res.res);
+        fwrite(&iToken, sizeof(long int), 1, newSess);
+        fclose(newSess);
+    }
+}
+void r_handle_print(StringRes res) {
+    printf("%s\n", res.res);
+}
+// =========================== TODO RESPONSE MESSAGE HANDLER ===============================
+Res res_handler[10] = {
+    {r_save_token, r_handle_save_token},
+    {r_print, r_handle_print},
+    {r_end_wait, NULL},
+    {NULL, NULL},
+};
+
+void *receive_messages(void *socket) {
+    int cl = *(int *)socket;
+    char buffer[1024];
+
+    while(1) {
+        StringRes res;
+        if(verifyConnection(recv(cl, &res, sizeof(StringRes), 0), cl)) break;
+        char *arg = strtok(res.args, " ");
+        while(arg) {
+            if(!strcmp(arg, r_end_wait)) {
+                processIn = 0; break;
+            }
+            for(int i=0; res_handler[i].response != NULL; i++) {
+                if(!strcmp(arg, res_handler[i].response)) {
+                    res_handler[i].handler(res);
+                    break;
+                }
+            }
+            arg = strtok(NULL, " ");
+        }
+    }
+}
+
 int main() {
-    int client_socket;
+    init_openssl();
+    ctx = create_context();
+
+    signal(SIGINT, handle_sigint);
     struct sockaddr_in server_addr;
     pthread_t recv_thread;
 
@@ -63,38 +140,56 @@ int main() {
         exit(EXIT_FAILURE);
     }
 
-    // pthread_create(&recv_thread, NULL, receive_messages, &client_socket);
+    ssl = SSL_new(ctx);
+    SSL_set_fd(ssl, client_socket);
+    if(SSL_connect(ssl) <= 0) {
+        ERR_print_errors_fp(stderr);
+        close(client_socket);
+        exit(EXIT_FAILURE);
+    }
+
+    pthread_create(&recv_thread, NULL, receive_messages, &client_socket);
 
     // Trimitem mesaje către server
-    char buffer[1024];
     while (1) {
-        // ========= HANDLER =========
-        int menuIndex = 0;
-        FILE *sess = fopen(DB_sessions, "rb");
-        if(sess != NULL) {
-            long int token;
-            fread(&token, sizeof(long int), 1, sess);
-            if(token) menuIndex = 1;
-            fclose(sess);
+        if(!processIn) {
+            char buffer[1024];
+            // ========= HANDLER =========
+            int menuIndex = 0;
+            FILE *sess = fopen(DB_sessions, "rb");
+            if(sess != NULL) {
+                long int token;
+                fread(&token, sizeof(long int), 1, sess);
+                if(token) menuIndex = 1;
+                fclose(sess);
+            }
+            FILE *chatSess = fopen(DB_chatSession, "rb");
+            if(sess != NULL && menuIndex == 1) {
+                long int token;
+                fread(&token, sizeof(long int), 1, chatSess);
+                if(token) menuIndex = 2;
+                fclose(chatSess);
+            }
+            printf("%sMeniu:\n", CYAN);
+            int limit = 0;
+            for(int i=0; a_menu[menuIndex][i].instruction != NULL; i++) {
+                printf("%d: %s\n", i+1, a_menu[menuIndex][i].instruction);
+                limit++;
+            }
+            printf("%s", RESET);
+            int option; scanf("%d", &option);
+            if(a_menu[menuIndex][option-1].action != NULL) send(client_socket, a_menu[menuIndex][option-1].action, sizeof(a_menu[menuIndex][option-1].action), 0);
+            if(option >= 1 && option <= limit) {
+                processIn = 1;
+                a_menu[menuIndex][option-1].handler(client_socket, &processIn);
+            }
         }
-        FILE *chatSess = fopen(DB_chatSession, "rb");
-        if(sess != NULL && menuIndex == 1) {
-            long int token;
-            fread(&token, sizeof(long int), 1, chatSess);
-            if(token) menuIndex = 2;
-            fclose(chatSess);
-        }
-        printf("%sMeniu:\n", CYAN);
-        int limit = 0;
-        for(int i=0; a_menu[menuIndex][i].instruction != NULL; i++) {
-            printf("%d: %s\n", i+1, a_menu[menuIndex][i].instruction);
-            limit++;
-        }
-        printf("%s", RESET);
-        int option; scanf("%d", &option);
-        if(a_menu[menuIndex][option-1].action != NULL) send(client_socket, a_menu[menuIndex][option-1].action, sizeof(a_menu[menuIndex][option-1].action), 0);
-        if(option >= 1 && option <= limit) a_menu[menuIndex][option-1].handler(client_socket);
     }
+
+    printf("Server DOWN");
+    SSL_shutdown(ssl);
+    SSL_free(ssl);
+    SSL_CTX_free(ctx);
 
     close(client_socket);
     return 0;

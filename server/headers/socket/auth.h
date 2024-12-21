@@ -3,7 +3,7 @@
 
 #include "index.h"
 
-void handle_login(int sd, int *socket);
-void handle_register(int sd, int *socket);
+void handle_login(Client *sd);
+void handle_register(Client *sd);
 
 #endif

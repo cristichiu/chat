@@ -1,6 +1,9 @@
 #ifndef A_INDEX_H
 #define A_INDEX_H
 
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,8 +23,13 @@
 typedef struct Menu {
     char *action;
     char *instruction;
-    void (*handler)(int);
+    void (*handler)(int, int *);
 } Menu;
+
+typedef struct Res {
+    char *response;
+    void (*handler)(StringRes res);
+} Res;
 
 #define ERROR "\033[0;31m"
 #define SUCCESS "\033[0;32m"

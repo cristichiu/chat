@@ -1,43 +1,36 @@
 #include "../index.h"
 
-void handle_login(int sd, int *socket) {
+void handle_login(Client *sd) {
     ALogin login;
-    int res = recv(sd, &login, sizeof(ALogin), 0);
-    if(res <= 0) {
-        printf("Client deconectat, socket: %d\n", sd);
-        close(sd);
-        *socket = 0;
+    int rs = recv(sd->socket, &login, sizeof(ALogin), 0);
+    if(verifyConn(sd, rs)) return;
+    UserSessions lgSess = loginUser(login.private_username, login.password, "todo");
+    StringRes res;
+    if(!lgSess.id) {
+        sprintf(res.res, "Ceva nu a mers bine");
+        res.status = 404;
+        sprintf(res.args, "%s %s", r_print, r_end_wait);
     } else {
-        UserSessions lgSess = loginUser(login.private_username, login.password, "todo");
-        StringRes res;
-        if(!lgSess.id) {
-            sprintf(res.res, "Ceva nu a mers bine");
-            res.status = 404;
-        } else {
-            sprintf(res.res, "%ld", lgSess.token);
-            res.status = 200;
-        }
-        send(sd, &res, sizeof(StringRes), 0);
+        sprintf(res.res, "%ld", lgSess.token);
+        res.status = 200;
+        sprintf(res.args, "%s %s", r_save_token, r_end_wait);
     }
+    send(sd->socket, &res, sizeof(StringRes), 0);
 }
 
-void handle_register(int sd, int *socket) {
+void handle_register(Client *sd) {
     ARegister regs;
-    int res = recv(sd, &regs, sizeof(ARegister), 0);
-    if(res <= 0) {
-        printf("Client deconectat, socket: %d\n", sd);
-        close(sd);
-        *socket = 0;
+    int rs = recv(sd->socket, &regs, sizeof(ARegister), 0);
+    if(verifyConn(sd, rs)) return;
+    StringRes res;
+    int status = createUser(regs.private_username, regs.username, regs.password);
+    if(status) {
+        sprintf(res.res, "User-ul nu a fost creat.");
+        res.status = status;
     } else {
-        StringRes res;
-        int status = createUser(regs.private_username, regs.username, regs.password);
-        if(status) {
-            sprintf(res.res, "User-ul nu a fost creat.");
-            res.status = status;
-        } else {
-            sprintf(res.res, "User-ul a fost creat cu succes.");
-            res.status = 200;
-        }
-        send(sd, &res, sizeof(StringRes), 0);
+        sprintf(res.res, "User-ul a fost creat cu succes.");
+        res.status = 200;
     }
+    sprintf(res.args, "%s %s", r_print, r_end_wait);
+    send(sd->socket, &res, sizeof(StringRes), 0);
 }

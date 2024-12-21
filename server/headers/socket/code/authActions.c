@@ -1,40 +1,38 @@
 #include "../index.h"
 
-void handle_whoami(int sd, int *socket) {
+void handle_whoami(Client *sd) {
     StringRes res;
-    Users user = handle_user_session_verify(sd, socket);
+    Users user = handle_user_session_verify(sd);
     if(!user.id) {
         sprintf(res.res, "Nu am putut gasi sesiunea ta");
         res.status = 404;
-        send(sd, &res, sizeof(StringRes), 0);
+        sprintf(res.args, "%s %s", r_print, r_end_wait);
+        send(sd->socket, &res, sizeof(StringRes), 0);
         return;
     }
-    sprintf(res.res, "Esti cumva asta tu?:\nuser_public_id: %ld\nusername: %s\n", user.public_id, user.username);
+    sprintf(res.res, "Esti cumva asta tu?:\nuser_public_id: %ld\nusername: %s", user.public_id, user.username);
     res.status = 200;
-    send(sd, &res, sizeof(StringRes), 0);
+    sprintf(res.args, "%s %s", r_print, r_end_wait);
+    send(sd->socket, &res, sizeof(StringRes), 0);
 }
 
-void handle_create_grup(int sd, int *socket) {
+void handle_create_grup(Client *sd) {
     StringRes res;
-    Users user = handle_user_session_verify(sd, socket);
+    Users user = handle_user_session_verify(sd);
     if(!user.id) {
         sprintf(res.res, "Nu am putut gasi sesiunea ta");
         res.status = 404;
-        send(sd, &res, sizeof(StringRes), 0);
+        sprintf(res.args, "%s %s", r_print, r_end_wait);
+        send(sd->socket, &res, sizeof(StringRes), 0);
         return;
     }
     sprintf(res.res, "Sesiunea merge");
     res.status = 200;
-    send(sd, &res, sizeof(StringRes), 0);
+    send(sd->socket, &res, sizeof(StringRes), 0);
     char grupName[64];
-    int rs = read(sd, grupName, sizeof(grupName));
+    int rs = read(sd->socket, grupName, sizeof(grupName));
     grupName[rs] = '\0';
-    if(rs <= 0) {
-        printf("Client deconectat, socket: %d\n", sd);
-        close(sd);
-        *socket = 0;
-        return;
-    }
+    if(verifyConn(sd, rs)) return;
     int cStatus = createGrup(grupName, user.id);
     if(cStatus) {
         sprintf(res.res, "Ceva a mers prost");
@@ -43,19 +41,15 @@ void handle_create_grup(int sd, int *socket) {
         sprintf(res.res, "Ai creat un grup cu succes");
         res.status = 200;
     }
-    send(sd, &res, sizeof(StringRes), 0);
+    sprintf(res.args, "%s %s", r_print, r_end_wait);
+    send(sd->socket, &res, sizeof(StringRes), 0);
 }
 
-void handle_logoff(int sd, int *socket) {
+void handle_logoff(Client *sd) {
     char buffer[16];
-    int res = read(sd, buffer, sizeof(buffer));
+    int res = read(sd->socket, buffer, sizeof(buffer));
     buffer[res] = '\0';
-    if(res <= 0) {
-        printf("Client deconectat, socket: %d\n", sd);
-        close(sd);
-        *socket = 0;
-        return;
-    }
+    if(verifyConn(sd, res)) return;
     FILE *file = fopen(c_sessions, "r+b");
     if(file == NULL) return;
     UserSessions Sbuffer;
@@ -64,37 +58,46 @@ void handle_logoff(int sd, int *socket) {
             Sbuffer.deleted = 1;
             fseek(file, -sizeof(UserSessions), SEEK_CUR);
             fwrite(&Sbuffer, sizeof(UserSessions), 1, file);
-            fclose(file);
-            return;
+            break;
         }
     }
     fclose(file);
+    StringRes finn;
+    finn.status = 200;
+    sprintf(finn.args, "%s %s", r_print, r_end_wait);
+    strcpy(finn.res, "Log off");
+    send(sd->socket, &finn, sizeof(StringRes), 0);
 }
 
-void handle_see_my_grups(int sd, int *socket) {
+void handle_see_my_grups(Client *sd) {
     StringRes res;
-    Users user = handle_user_session_verify(sd, socket);
+    Users user = handle_user_session_verify(sd);
     if(!user.id) {
         sprintf(res.res, "Nu am gasit sesiunea ta!");
         res.status = 404;
-        send(sd, &res, sizeof(StringRes), 0);
+        sprintf(res.args, "%s %s", r_print, r_end_wait);
+        send(sd->socket, &res, sizeof(StringRes), 0);
         return;
     }
     GrupMembers *allMyGrups = getAllMyGrups(user.id);
     int count = 0;
-    strcpy(res.res, "");
     while(allMyGrups[count].user_id) {
         Grups grup = getGrupByLId(allMyGrups[count].grup_id, GS_FOR_ID);
+        StringRes res;
+        sprintf(res.args, "%s", r_print);
         if(grup.id) {
-            int current_length = strlen(res.res);
-            int remaining_space = MAX_LENGTH_IN_RES - current_length;
-            int needed_space = snprintf(NULL, 0, "%ld - %s - %d (%d%d)\n", grup.public_id, grup.name, allMyGrups[count].permissions, allMyGrups[count].accept_by_user, grup.owner == user.id);
-            if (needed_space + 1 <= remaining_space) {
-                snprintf(res.res + current_length, remaining_space, "%ld - %s - %d (%d%d)\n", grup.public_id, grup.name, allMyGrups[count].permissions, allMyGrups[count].accept_by_user, grup.owner == user.id);
-            }
+            sprintf(res.res, "%ld - %s - %d (%d%d)", grup.public_id, grup.name, allMyGrups[count].permissions, allMyGrups[count].accept_by_user, grup.owner== user.id);
+            res.status = 200;
+        } else {
+            sprintf(res.res, "Grup not found");
+            res.status = 404;
         }
-       count++;
+        send(sd->socket, &res, sizeof(StringRes), 0);
+        count++;
     }
-    res.status = 200;
-    send(sd, &res, sizeof(StringRes), 0);
+    StringRes finn;
+    finn.status = 303;
+    sprintf(finn.args, "%s", r_end_wait);
+    strcpy(finn.res, "FINAL");
+    send(sd->socket, &finn, sizeof(StringRes), 0);
 }
