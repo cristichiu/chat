@@ -178,7 +178,7 @@ int main() {
 
             if (FD_ISSET(sd, &readfds)) {
                 char buffer[1024];
-                int valread = read(sd, buffer, sizeof(buffer));
+                int valread = SSL_read(sl, buffer, sizeof(buffer));
                 if (valread == 0) {
                     // Clientul s-a deconectat
                     printf("Client deconectat, socket: %d\n", sd);

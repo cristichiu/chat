@@ -97,7 +97,7 @@ void *receive_messages(void *socket) {
 
     while(1) {
         StringRes res;
-        if(verifyConnection(recv(cl, &res, sizeof(StringRes), 0), cl)) break;
+        if(verifyConnection(SSL_read(ssl, &res, sizeof(StringRes)), cl, ssl)) break;
         char *arg = strtok(res.args, " ");
         while(arg) {
             if(!strcmp(arg, r_end_wait)) {
@@ -178,10 +178,10 @@ int main() {
             }
             printf("%s", RESET);
             int option; scanf("%d", &option);
-            if(a_menu[menuIndex][option-1].action != NULL) send(client_socket, a_menu[menuIndex][option-1].action, sizeof(a_menu[menuIndex][option-1].action), 0);
+            if(a_menu[menuIndex][option-1].action != NULL) SSL_write(ssl, a_menu[menuIndex][option-1].action, sizeof(a_menu[menuIndex][option-1].action));
             if(option >= 1 && option <= limit) {
                 processIn = 1;
-                a_menu[menuIndex][option-1].handler(client_socket, &processIn);
+                a_menu[menuIndex][option-1].handler(client_socket, ssl, &processIn);
             }
         }
     }

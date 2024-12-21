@@ -2,7 +2,7 @@
 
 void handle_login(Client *sd) {
     ALogin login;
-    int rs = recv(sd->socket, &login, sizeof(ALogin), 0);
+    int rs = SSL_read(sd->ssl, &login, sizeof(ALogin));
     if(verifyConn(sd, rs)) return;
     UserSessions lgSess = loginUser(login.private_username, login.password, "todo");
     StringRes res;
@@ -15,12 +15,12 @@ void handle_login(Client *sd) {
         res.status = 200;
         sprintf(res.args, "%s %s", r_save_token, r_end_wait);
     }
-    send(sd->socket, &res, sizeof(StringRes), 0);
+    SSL_write(sd->ssl, &res, sizeof(StringRes));
 }
 
 void handle_register(Client *sd) {
     ARegister regs;
-    int rs = recv(sd->socket, &regs, sizeof(ARegister), 0);
+    int rs = SSL_read(sd->ssl, &regs, sizeof(ARegister));
     if(verifyConn(sd, rs)) return;
     StringRes res;
     int status = createUser(regs.private_username, regs.username, regs.password);
@@ -32,5 +32,5 @@ void handle_register(Client *sd) {
         res.status = 200;
     }
     sprintf(res.args, "%s %s", r_print, r_end_wait);
-    send(sd->socket, &res, sizeof(StringRes), 0);
+    SSL_write(sd->ssl, &res, sizeof(StringRes));
 }

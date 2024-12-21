@@ -23,7 +23,7 @@
 typedef struct Menu {
     char *action;
     char *instruction;
-    void (*handler)(int, int *);
+    void (*handler)(int, SSL *, int *);
 } Menu;
 
 typedef struct Res {

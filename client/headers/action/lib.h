@@ -4,7 +4,7 @@
 #include "index.h"
 
 long int ldtoa(char *str);
-int verifyConnection(int rs, int cl);
+int verifyConnection(int rs, int cl, SSL *ssl);
 char *getSessionToken();
 char *getChatSessionToken();
 
