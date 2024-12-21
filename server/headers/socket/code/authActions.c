@@ -7,13 +7,13 @@ void handle_whoami(Client *sd) {
         sprintf(res.res, "Nu am putut gasi sesiunea ta");
         res.status = 404;
         sprintf(res.args, "%s %s", r_print, r_end_wait);
-        send(sd->socket, &res, sizeof(StringRes), 0);
+        SSL_write(sd->ssl, &res, sizeof(StringRes));
         return;
     }
     sprintf(res.res, "Esti cumva asta tu?:\nuser_public_id: %ld\nusername: %s", user.public_id, user.username);
     res.status = 200;
     sprintf(res.args, "%s %s", r_print, r_end_wait);
-    send(sd->socket, &res, sizeof(StringRes), 0);
+    SSL_write(sd->ssl, &res, sizeof(StringRes));
 }
 
 void handle_create_grup(Client *sd) {
@@ -23,12 +23,12 @@ void handle_create_grup(Client *sd) {
         sprintf(res.res, "Nu am putut gasi sesiunea ta");
         res.status = 404;
         sprintf(res.args, "%s %s", r_print, r_end_wait);
-        send(sd->socket, &res, sizeof(StringRes), 0);
+        SSL_write(sd->ssl, &res, sizeof(StringRes));
         return;
     }
     sprintf(res.res, "Sesiunea merge");
     res.status = 200;
-    send(sd->socket, &res, sizeof(StringRes), 0);
+    SSL_write(sd->ssl, &res, sizeof(StringRes));
     char grupName[64];
     int rs = read(sd->socket, grupName, sizeof(grupName));
     grupName[rs] = '\0';
@@ -42,12 +42,12 @@ void handle_create_grup(Client *sd) {
         res.status = 200;
     }
     sprintf(res.args, "%s %s", r_print, r_end_wait);
-    send(sd->socket, &res, sizeof(StringRes), 0);
+    SSL_write(sd->ssl, &res, sizeof(StringRes));
 }
 
 void handle_logoff(Client *sd) {
     char buffer[16];
-    int res = read(sd->socket, buffer, sizeof(buffer));
+    int res = SSL_read(sd->ssl, buffer, sizeof(buffer));
     buffer[res] = '\0';
     if(verifyConn(sd, res)) return;
     FILE *file = fopen(c_sessions, "r+b");
@@ -66,7 +66,7 @@ void handle_logoff(Client *sd) {
     finn.status = 200;
     sprintf(finn.args, "%s %s", r_print, r_end_wait);
     strcpy(finn.res, "Log off");
-    send(sd->socket, &finn, sizeof(StringRes), 0);
+    SSL_write(sd->ssl, &finn, sizeof(StringRes));
 }
 
 void handle_see_my_grups(Client *sd) {
@@ -76,7 +76,7 @@ void handle_see_my_grups(Client *sd) {
         sprintf(res.res, "Nu am gasit sesiunea ta!");
         res.status = 404;
         sprintf(res.args, "%s %s", r_print, r_end_wait);
-        send(sd->socket, &res, sizeof(StringRes), 0);
+        SSL_write(sd->ssl, &res, sizeof(StringRes));
         return;
     }
     GrupMembers *allMyGrups = getAllMyGrups(user.id);
@@ -92,12 +92,12 @@ void handle_see_my_grups(Client *sd) {
             sprintf(res.res, "Grup not found");
             res.status = 404;
         }
-        send(sd->socket, &res, sizeof(StringRes), 0);
+        SSL_write(sd->ssl, &res, sizeof(StringRes));
         count++;
     }
     StringRes finn;
     finn.status = 303;
     sprintf(finn.args, "%s", r_end_wait);
     strcpy(finn.res, "FINAL");
-    send(sd->socket, &finn, sizeof(StringRes), 0);
+    SSL_write(sd->ssl, &finn, sizeof(StringRes));
 }

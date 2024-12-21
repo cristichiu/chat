@@ -1,15 +1,15 @@
 #include "../authActions.h"
 
-void ma_whoami(int cl, int *prc) {
+void ma_whoami(int cl, SSL *ssl, int *prc) {
     char *token = getSessionToken();
     StringRes res;
-    send(cl, token, 16, 0);
+    SSL_write(ssl, token, 16);
     return;
 }
 
-void ma_logoff(int cl, int *prc) {
+void ma_logoff(int cl, SSL *ssl, int *prc) {
     char *token = getSessionToken();
-    send(cl, token, 16, 0);
+    SSL_write(ssl, token, 16);
     FILE *file = fopen(DB_sessions, "wb");
     if(file == NULL) return;
     long int reset = 0;
@@ -18,27 +18,27 @@ void ma_logoff(int cl, int *prc) {
     return;
 }
 
-void ma_create_grup(int cl, int *prc) {
+void ma_create_grup(int cl, SSL *ssl, int *prc) {
     char *token = getSessionToken();
     StringRes res;
-    send(cl, token, 16, 0);
-    if(verifyConnection(recv(cl, &res, sizeof(StringRes), 0), cl)) return;
+    SSL_write(ssl, token, 16);
+    if(verifyConnection(SSL_read(ssl, &res, sizeof(StringRes)), cl, ssl)) return;
     if(res.status == 200) {
         char grupName[64];
         printf("Grup name: "); scanf("%s", grupName);
-        send(cl, grupName, sizeof(grupName), 0);
+        SSL_write(ssl, grupName, sizeof(grupName));
     }
     return;
 }
 
-void ma_see_my_grups(int cl, int *prc) {
+void ma_see_my_grups(int cl, SSL *ssl, int *prc) {
     char *token = getSessionToken();
     StringRes res;
-    send(cl, token, 16, 0);
+    SSL_write(ssl, token, 16);
     return;
 }
 
-void ma_focus_grup(int cl, int *prc) {
+void ma_focus_grup(int cl, SSL *ssl, int *prc) {
     long int chatSession;
     printf("Chat public ID: "); scanf("%ld", &chatSession);
     FILE *file = fopen(DB_chatSession, "wb");
