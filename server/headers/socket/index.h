@@ -1,6 +1,14 @@
 #ifndef SK_INDEX_H
 #define SK_INDEX_H
 
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+
+typedef struct Client {
+    int socket;
+    SSL *ssl;
+} Client;
+
 #include "../db/index.h"
 #include "../../../actions.h"
 
@@ -25,7 +33,7 @@
 
 typedef struct Command {
     const char *command;
-    void (*handler)(int, int *);
+    void (*handler)(Client *);
 } Command;
 
 #endif

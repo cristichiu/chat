@@ -14,6 +14,10 @@
 #define a_accept_grup_inv "aGrupIn"
 #define a_see_grup_messages "sGrupM"
 
+#define r_save_token "saveToken"
+#define r_print "print"
+#define r_end_wait "endWait"
+
 #define MAX_LENGTH_IN_RES 1024
 
 typedef struct ARegister {
@@ -29,6 +33,7 @@ typedef struct ALogin {
 
 typedef struct StringRes {
     int status;
+    char args[MAX_LENGTH_IN_RES];
     char res[MAX_LENGTH_IN_RES];
 } StringRes;
 

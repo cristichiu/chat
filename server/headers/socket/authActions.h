@@ -3,9 +3,9 @@
 
 #include "index.h"
 
-void handle_whoami(int sd, int *socket);
-void handle_create_grup(int sd, int *socket);
-void handle_logoff(int sd, int *socket);
-void handle_see_my_grups(int sd, int *socket);
+void handle_whoami(Client *sd);
+void handle_create_grup(Client *sd);
+void handle_logoff(Client *sd);
+void handle_see_my_grups(Client *sd);
 
 #endif
