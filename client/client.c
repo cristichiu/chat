@@ -152,6 +152,10 @@ int main() {
 
     // Trimitem mesaje către server
     while (1) {
+        if(processIn == 2) {
+            SSL_write(ssl, a_write_message, sizeof(a_write_message));
+            ma_write_message(client_socket, ssl, &processIn);
+        }
         if(!processIn) {
             char buffer[1024];
             // ========= HANDLER =========

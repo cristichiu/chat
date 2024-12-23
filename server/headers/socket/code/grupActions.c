@@ -12,7 +12,7 @@ void handle_see_focus_grup(Client *sd) {
         return;
     }
     GrupMembers member = getGrupMember(user.id, grup.id);
-    sprintf(res.res, "%ld - %s - %d (%d%d)\n", grup.public_id, grup.name, member.permissions, member.accept_by_user, grup.owner == user.id);
+    sprintf(res.res, "%ld - %s - %d (%d%d)", grup.public_id, grup.name, member.permissions, member.accept_by_user, grup.owner == user.id);
     res.status = 200;
     sprintf(res.args, "%s %s", r_print, r_end_wait);
     SSL_write(sd->ssl, &res, sizeof(StringRes));
@@ -64,21 +64,20 @@ void handle_see_grup_members(Client *sd) {
     while(allMembers[count].user_id) {
         Users grupUser = getUserByLInt(allMembers[count].user_id, US_FOR_ID);
         if(user.id) {
-            int current_length = strlen(res.res);
-            int remaining_space = MAX_LENGTH_IN_RES - current_length;
-            int needed_space = snprintf(NULL, 0, "%ld - %s - %d (%d)\n", grupUser.public_id, grupUser.username, allMembers[count].permissions, allMembers[count].accept_by_user);
-            if (needed_space + 1 <= remaining_space) {
-                snprintf(res.res + current_length, remaining_space, "%ld - %s - %d (%d)\n", grupUser.public_id, grupUser.username, allMembers[count].permissions, allMembers[count].accept_by_user);
-            }
+            sprintf(res.res, "%ld - %s - %d (%d)", grupUser.public_id, grupUser.username, allMembers[count].permissions, allMembers[count].accept_by_user);
+            res.status = 200;
+            sprintf(res.args, "%s", r_print);
+            SSL_write(sd->ssl, &res, sizeof(StringRes));
         }
         count++;
     }
-    res.status = 200;
-    sprintf(res.args, "%s %s", r_print, r_end_wait);
+    sprintf(res.res, "FINAL");
+    res.status = 303;
+    sprintf(res.args, "%s", r_end_wait);
     SSL_write(sd->ssl, &res, sizeof(StringRes));
 }
 
-void handle_write_message(Client *sd) {
+void handle_write_message(Client *sd, Client sds[MAX_CLIENTS]) {
     Users user = handle_user_session_verify(sd);
     Grups grup = handle_chat_session_verify(sd);
     StringRes res;
@@ -91,19 +90,26 @@ void handle_write_message(Client *sd) {
         return;
     }
     char message[1024];
-    int rs = read(sd->socket, message, sizeof(message));
+    int rs = SSL_read(sd->ssl, message, sizeof(message));
+    if(verifyConn(sd, rs)) return;
     message[rs] = '\0';
+    if(!strcmp(message, "")) return;
     if(message[strlen(message)-1] == '\n') message[strlen(message)-1] = '\0';
     int status = createMessage(message, grup.id, user.id);
-    sprintf(res.args, "%s %s", r_print, r_end_wait);
     if(status) {
+        sprintf(res.args, "%s %s", r_print, r_end_wait);
         sprintf(res.res, "Nu am reusit sa scriu mesajul");
         res.status = status;
         SSL_write(sd->ssl, &res, sizeof(StringRes));
     } else {
-        sprintf(res.res, "Ai scris un mesaj cu succes");
+        time_t t = time(NULL);
+        struct tm tm = *localtime(&t);
+        sprintf(res.res, "%s: %d-%02d-%02d | %02d:%02d:%02d -> %s", user.username, tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, message);
+        sprintf(res.args, "%s", r_print);
         res.status = 200;
-        SSL_write(sd->ssl, &res, sizeof(StringRes));
+        for(int i=0; i<MAX_CLIENTS; i++) {
+            if(sds[i].socket != 0 && sds[i].chatSession == grup.public_id) SSL_write(sds[i].ssl, &res, sizeof(StringRes));
+        }
     }
 }
 
@@ -156,16 +162,16 @@ void handle_see_grup_messages(Client *sd) {
     while(msgs[count].id) {
         Users user = getUserByLInt(msgs[count].user_id, US_FOR_ID);
         if(user.id) {
-            int current_length = strlen(res.res);
-            int remaining_space = MAX_LENGTH_IN_RES - current_length;
-            int needed_space = snprintf(NULL, 0, "%s: %d-%02d-%02d | %02d:%02d:%02d -> %s\n", user.username, msgs[count].time_created.tm_year + 1900, msgs[count].time_created.tm_mon + 1, msgs[count].time_created.tm_mday, msgs[count].time_created.tm_hour, msgs[count].time_created.tm_min, msgs[count].time_created.tm_sec, msgs[count].message);
-            if (needed_space + 1 <= remaining_space) {
-                snprintf(res.res + current_length, remaining_space, "%s: %d-%02d-%02d | %02d:%02d:%02d -> %s\n", user.username, msgs[count].time_created.tm_year + 1900, msgs[count].time_created.tm_mon + 1, msgs[count].time_created.tm_mday, msgs[count].time_created.tm_hour, msgs[count].time_created.tm_min, msgs[count].time_created.tm_sec, msgs[count].message);
-            }
+            sprintf(res.res, "%s: %d-%02d-%02d | %02d:%02d:%02d -> %s", user.username, msgs[count].time_created.tm_year + 1900, msgs[count].time_created.tm_mon + 1, msgs[count].time_created.tm_mday, msgs[count].time_created.tm_hour, msgs[count].time_created.tm_min, msgs[count].time_created.tm_sec, msgs[count].message);
+            sprintf(res.args, "%s", r_print);
+            res.status = 200;
+            SSL_write(sd->ssl, &res, sizeof(StringRes));
         }
         count++;
     }
-    sprintf(res.args, "%s %s", r_print, r_end_wait);
-    res.status = 200;
-    SSL_write(sd->ssl, &res, sizeof(StringRes));
+    sd->chatSession = grup.public_id;
+//    sprintf(res.res, "FINAL");
+//    sprintf(res.args, "%s", r_end_wait);
+//    res.status = 303;
+//    SSL_write(sd->ssl, &res, sizeof(StringRes));
 }

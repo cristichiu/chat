@@ -18,7 +18,7 @@
 #define r_print "print"
 #define r_end_wait "endWait"
 
-#define MAX_LENGTH_IN_RES 1024
+#define MAX_LENGTH_IN_RES 1512
 
 typedef struct ARegister {
     char username[64];

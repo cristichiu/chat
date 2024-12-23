@@ -3,7 +3,6 @@
 #include "./headers/socket/index.h"
 
 #define PORT 8080
-#define MAX_CLIENTS 100
 
 int server_socket;
 SSL_CTX *ctx;
@@ -29,19 +28,19 @@ void handle_sigint(int sig) {
 
 // ================ COMMANDS ================
 Command command_table[] = {
-    {a_register, handle_register},
-    {a_login, handle_login},
-    {a_whoami, handle_whoami},
-    {a_create_grup, handle_create_grup},
-    {a_logoff, handle_logoff},
-    {a_see_my_grups, handle_see_my_grups},
-    {a_see_focus_grup, handle_see_focus_grup},
-    {a_add_new_member, handle_add_new_meber},
-    {a_see_grup_members, handle_see_grup_members},
-    {a_write_message, handle_write_message},
-    {a_accept_grup_inv, handle_accept_grup_inv},
-    {a_see_grup_messages, handle_see_grup_messages},
-    {NULL, NULL}
+    {a_register, handle_register, NULL},
+    {a_login, handle_login, NULL},
+    {a_whoami, handle_whoami, NULL},
+    {a_create_grup, handle_create_grup, NULL},
+    {a_logoff, handle_logoff, NULL},
+    {a_see_my_grups, handle_see_my_grups, NULL},
+    {a_see_focus_grup, handle_see_focus_grup, NULL},
+    {a_add_new_member, handle_add_new_meber, NULL},
+    {a_see_grup_members, handle_see_grup_members, NULL},
+    {a_write_message, NULL, handle_write_message},
+    {a_accept_grup_inv, handle_accept_grup_inv, NULL},
+    {a_see_grup_messages, handle_see_grup_messages, NULL},
+    {NULL, NULL, NULL}
 };
 // ==========================================
 
@@ -120,6 +119,7 @@ int main() {
     for (int i = 0; i < MAX_CLIENTS; i++) {
         client_sockets[i].socket = 0;
         client_sockets[i].ssl = NULL;
+        client_sockets[i].chatSession = 0;
     }
 
     while (1) {
@@ -156,6 +156,7 @@ int main() {
                 if (client_sockets[i].socket == 0) {
                     client_sockets[i].socket = new_socket;
                     client_sockets[i].ssl = SSL_new(ctx);
+                    client_sockets[i].chatSession = 0;
                     SSL_set_fd(client_sockets[i].ssl, new_socket);
                     if(SSL_accept(client_sockets[i].ssl) <= 0) {
                         ERR_print_errors_fp(stderr);
@@ -164,6 +165,7 @@ int main() {
                         SSL_free(client_sockets[i].ssl);
                         client_sockets[i].ssl = NULL;
                         client_sockets[i].socket = 0;
+                        client_sockets[i].chatSession = 0;
                         continue;
                     }
                     break;
@@ -187,12 +189,17 @@ int main() {
                     SSL_free(client_sockets[i].ssl);
                     client_sockets[i].ssl = NULL;
                     client_sockets[i].socket = 0;
+                    client_sockets[i].chatSession = 0;
                 } else {
                     buffer[valread] = '\0';
                     // ============= COMMAND HANDLER =============
                     for (int j = 0; command_table[j].command != NULL; j++) {
                         if (!strcmp(buffer, command_table[j].command)) {
-                            command_table[j].handler(&client_sockets[i]);
+                            if(command_table[j].handler == NULL) {
+                                command_table[j].multiUserHandler(&client_sockets[i], client_sockets);
+                            } else {
+                                command_table[j].handler(&client_sockets[i]);
+                            }
                             break;
                         }
                     }
