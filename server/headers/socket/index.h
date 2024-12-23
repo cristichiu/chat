@@ -1,12 +1,15 @@
 #ifndef SK_INDEX_H
 #define SK_INDEX_H
 
+#define MAX_CLIENTS 100
+
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
 typedef struct Client {
     int socket;
     SSL *ssl;
+    long int chatSession;
 } Client;
 
 #include "../db/index.h"
@@ -34,6 +37,7 @@ typedef struct Client {
 typedef struct Command {
     const char *command;
     void (*handler)(Client *);
+    void (*multiUserHandler)(Client *, Client [MAX_CLIENTS]);
 } Command;
 
 #endif

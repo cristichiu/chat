@@ -40,9 +40,7 @@ void ma_write_message(int cl, SSL *ssl, int *prc) {
     char *chatToken = getChatSessionToken();
     SSL_write(ssl, token, 16);
     SSL_write(ssl, chatToken, 16);
-    printf("Scrie mesajul tau: ");
     char message[1024];
-    getchar();
     fgets(message, 1024, stdin);
     SSL_write(ssl, message, sizeof(message));
 }
@@ -59,4 +57,5 @@ void ma_see_all_grup_messages(int cl, SSL *ssl, int *prc) {
     char *chatToken = getChatSessionToken();
     SSL_write(ssl, token, 16);
     SSL_write(ssl, chatToken, 16);
+    *prc = 2;
 }

@@ -8,6 +8,7 @@ int verifyConn(Client *sd, int res) {
         SSL_shutdown(sd->ssl);
         SSL_free(sd->ssl);
         sd->ssl = NULL;
+        sd->chatSession = 0;
         return 1;
     } else return 0;
 }
