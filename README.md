@@ -5,7 +5,10 @@
 
 ### Prerequisites
 
-- [GCC](https://gcc.gnu.org/) sudo apt install gcc
+- [GCC](https://gcc.gnu.org/)
+```bash
+sudo apt install gcc
+```
 
 ### Setup and Running the Application
 
