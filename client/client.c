@@ -184,7 +184,7 @@ int main() {
                 fclose(sess);
             }
             FILE *chatSess = fopen(DB_chatSession, "rb");
-            if(sess != NULL && menuIndex == 1) {
+            if(sess != NULL && menuIndex == 1 && chatSess != NULL) {
                 long int token;
                 fread(&token, sizeof(long int), 1, chatSess);
                 if(token) menuIndex = 2;

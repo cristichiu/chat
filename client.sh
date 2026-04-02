@@ -1,5 +1,7 @@
 #!/bin/bash
 
+cd client
+
 clear
 make clear
 make create
